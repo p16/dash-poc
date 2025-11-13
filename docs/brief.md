@@ -184,7 +184,7 @@ The MVP is considered successful when:
 
 - **Target Platforms:** Web application (desktop browsers primary; tablet acceptable, mobile not optimized for MVP)
 - **Browser Support:** Modern browsers (Chrome, Firefox, Safari, Edge - last 2 versions)
-- **Performance Requirements:** 
+- **Performance Requirements:**
   - Dashboard loads in <3 seconds
   - Custom LLM analysis can take a few minutes (acceptable for quality insights)
   - Scraping operations run in background without blocking UI
