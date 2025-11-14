@@ -227,8 +227,9 @@ async function extractPlanData(page: Page): Promise<O2Plan[]> {
 
 /**
  * Extract plan data from a single locator
+ * Exported for testing
  */
-async function extractPlanFromLocator(card: any): Promise<O2Plan | null> {
+export async function extractPlanFromLocator(card: any): Promise<O2Plan | null> {
   try {
     // Get card content using innerText (like the working implementation)
     const cardContent = await card.innerText();
