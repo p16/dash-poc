@@ -11,16 +11,16 @@ import { resolve } from 'path';
 config({ path: resolve(process.cwd(), '.env.local') });
 
 import { testConnection, closePool } from '../lib/db/connection';
+import { logger } from '../lib/utils/logger';
 
 async function main() {
   try {
-    // Use console.warn for info messages (allowed by ESLint)
-    console.warn('Testing database connection...');
+    logger.info('Testing database connection');
     await testConnection();
-    console.warn('✅ Database connection test passed!');
+    logger.info('Database connection test passed');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Database connection test failed:', error);
+    logger.error({ error }, 'Database connection test failed');
     process.exit(1);
   } finally {
     await closePool();

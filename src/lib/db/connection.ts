@@ -1,4 +1,5 @@
 import { Pool, PoolConfig } from 'pg';
+import { logger } from '../utils/logger';
 
 /**
  * Database connection pool configuration
@@ -36,7 +37,7 @@ export function getPool(): Pool {
 
   // Handle pool errors
   pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err);
+    logger.error({ error: err }, 'Unexpected error on idle client');
     process.exit(-1);
   });
 
@@ -57,12 +58,12 @@ export async function query(text: string, params?: unknown[]) {
     const duration = Date.now() - start;
     // Log query execution for debugging (only in development)
     if (process.env.NODE_ENV === 'development') {
-      console.warn('Executed query', { text, duration, rows: res.rowCount });
+      logger.debug({ text, duration, rows: res.rowCount }, 'Executed query');
     }
     return res;
   } catch (error) {
     const duration = Date.now() - start;
-    console.error('Query error', { text, duration, error });
+    logger.error({ text, duration, error }, 'Query error');
     throw error;
   }
 }
@@ -87,13 +88,12 @@ export async function testConnection(): Promise<boolean> {
   try {
     const result = await query('SELECT NOW() as current_time');
     if (result.rows && result.rows.length > 0) {
-      // Connection test successful - use console.warn as allowed by ESLint
-      console.warn('Database connection successful:', result.rows[0]);
+      logger.info({ currentTime: result.rows[0] }, 'Database connection successful');
       return true;
     }
     throw new Error('Database connection test returned no rows');
   } catch (error) {
-    console.error('Database connection test failed:', error);
+    logger.error({ error }, 'Database connection test failed');
     throw error;
   }
 }

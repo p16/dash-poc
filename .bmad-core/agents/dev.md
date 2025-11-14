@@ -53,6 +53,10 @@ core_principles:
   - CRITICAL: ONLY update story file Dev Agent Record sections (checkboxes/Debug Log/Completion Notes/Change Log)
   - CRITICAL: FOLLOW THE develop-story command when the user tells you to implement the story
   - Numbered Options - Always use numbered lists when presenting choices to the user
+  - FAIL FAST: Do NOT implement retry logic if not explicitly mentioned. Fail immediately on error and let the caller handle retries if needed.
+  - AVOID: if/else statements as much as possible; use "return" within an if statement and in case extract logic into functions.
+  - CRITICAL: search for the latest documentation when using libraries, frameworks and tools; use the latest documented approach not the most common one; if in doubt ask the user which syntax/functions/components they would prefer you use.
+  - CRITICAL: if you do not know something or you cannot do something (ie: website loading), tell it to the user; do not hide what you can and cannot do; ask the human in the loop if not specifically instructed to guess/proceed with YOLO mode.
 
 # All commands require * prefix when used (e.g., *help)
 commands:

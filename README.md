@@ -1,88 +1,55 @@
 # Scrape and Compare
 
-Competitive intelligence platform designed to help telecom providers make data-driven pricing and product decisions. The application automatically scrapes SIM-only plan data daily from major UK telco websites and aggregator sites, then leverages LLM-powered analysis to identify competitive gaps and opportunities.
+Competitive intelligence platform for telecom pricing analysis. Automatically scrapes SIM-only plan data from UK telco websites.
 
-## Features
-
-- **Automated Data Collection**: Daily scraping of SIM-only plans from 7 UK telcos (O2, Vodafone, Sky, Tesco, Smarty, Three, Giffgaff) and 1 aggregator (Uswitch)
-- **LLM-Powered Analysis**: Google Gemini 2.5 Pro integration for competitive analysis and strategic recommendations
-- **Interactive Dashboard**: Web-based UI for viewing analysis results, triggering custom comparisons, and exploring plan data
-
-## Tech Stack
-
-- **Framework**: Next.js 16 (App Router) with TypeScript
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Database**: PostgreSQL (Neon)
-- **LLM**: Google Gemini 2.5 Pro API
-- **Scraping**: Playwright for browser automation
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
-
-- Node.js 18+ and npm
-- Neon PostgreSQL database account
+- Node.js 24
+- Neon PostgreSQL database
 - Google Gemini API key
 
-### Installation
+### Setup
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd bmad-scraparer-compare
-```
-
-2. Install dependencies:
+1. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Set up environment variables:
+2. Configure environment:
 ```bash
 cp .env.local.example .env.local
 ```
 
-Edit `.env.local` and add your configuration:
-- `DATABASE_URL`: Your Neon PostgreSQL connection string
-- `GEMINI_API_KEY`: Your Google Gemini API key
-- `DASHBOARD_PASSWORD`: Password for dashboard access
+Edit `.env.local`:
+- `DATABASE_URL` - Neon PostgreSQL connection string
+- `GEMINI_API_KEY` - Google Gemini API key
+- `DASHBOARD_PASSWORD` - Dashboard access password
 
-4. Run the development server:
+3. Test database connection:
+```bash
+npm run test:db
+```
+
+4. Run development server:
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Visit [http://localhost:3000](http://localhost:3000)
 
-## Available Scripts
+## Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
+- `npm run dev` - Development server
+- `npm run build` - Production build
+- `npm run start` - Production server
 - `npm run lint` - Run ESLint
+- `npm run test:db` - Test database connection
+- `npm run scrape:poc` - Run O2 scraper POC
 
-## Project Structure
+## Documentation
 
-```
-├── src/
-│   ├── app/              # Next.js App Router pages
-│   ├── components/       # React components
-│   ├── lib/              # Shared utilities
-│   │   ├── db/          # Database utilities
-│   │   ├── scraping/    # Scraping modules
-│   │   └── llm/         # LLM integration
-│   └── types/           # TypeScript type definitions
-├── docs/                 # Project documentation
-├── migrations/           # Database migration files
-└── tests/                # Test files
-```
-
-## Development
-
-This project follows the BMAD (Breakthrough Method of Agile AI-driven Development) framework. Stories are tracked in `docs/stories/` and follow the epic/story structure defined in the PRD.
-
-## License
-
-ISC
+- Project requirements: `docs/prd.md`
+- Architecture: `docs/architecture/`
+- User stories: `docs/stories/`
 
