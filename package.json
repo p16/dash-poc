@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:db": "tsx src/scripts/test-db-connection.ts",
-    "scrape:poc": "tsx src/scripts/scrape-poc.ts"
+    "scrape:poc": "tsx src/scripts/scrape-poc.ts",
+    "migrate": "tsx src/scripts/run-migration.ts"
   },
   "description": "Competitive intelligence platform for telecom pricing analysis",
   "dependencies": {
