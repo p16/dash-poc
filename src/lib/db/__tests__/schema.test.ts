@@ -91,14 +91,28 @@ describe('Database Schema', () => {
     });
 
     it('should query JSONB fields', async () => {
+      // Use a unique test name to avoid conflicts with previous test runs
+      const uniqueName = `Test Plan JSONB Query ${Date.now()}`;
+
+      // Clean up any previous test data with similar names
+      await pool.query(
+        `DELETE FROM plans WHERE plan_data->>'name' LIKE 'Test Plan JSONB Query%'`
+      );
+
+      await pool.query(
+        `INSERT INTO plans (source, plan_data)
+         VALUES ($1, $2)`,
+        ['TEST', JSON.stringify({ name: uniqueName, price: '£15/month' })]
+      );
+
       const result = await pool.query(
         `SELECT * FROM plans
          WHERE plan_data->>'name' = $1`,
-        ['Test Plan']
+        [uniqueName]
       );
 
       expect(result.rows).toHaveLength(1);
-      expect(result.rows[0].plan_data.name).toBe('Test Plan');
+      expect(result.rows[0].plan_data.name).toBe(uniqueName);
     });
 
     it('should allow multiple plans with same characteristics (time-series data)', async () => {
@@ -125,7 +139,10 @@ describe('Database Schema', () => {
     });
 
     it('should track plan history using plan_key', async () => {
-      const planKey = 'TEST-10GB-12months';
+      const planKey = 'TEST-10GB-12months-history-test';
+
+      // Clean up any existing test data with this plan_key
+      await pool.query('DELETE FROM plans WHERE plan_key = $1', [planKey]);
 
       // Insert same plan at different times with different prices
       await pool.query(
@@ -133,6 +150,9 @@ describe('Database Schema', () => {
          VALUES ($1, $2, $3)`,
         ['TEST', planKey, JSON.stringify({ price: '£10' })]
       );
+
+      // Small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       await pool.query(
         `INSERT INTO plans (source, plan_key, plan_data)

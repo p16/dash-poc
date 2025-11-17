@@ -1,9 +1,9 @@
 /**
  * Telco Data Collection Orchestration
- * 
+ *
  * Runs all 7 telco collectors sequentially and stores raw data in database.
  * No normalization applied - data stored as-is.
- * 
+ *
  * Usage: npm run scrape:telcos
  */
 
@@ -33,9 +33,9 @@ interface CollectorResult {
 async function runAllCollectors(): Promise<void> {
   const startTime = Date.now();
   logger.info('Starting telco data collection');
-  
+
   const results: CollectorResult[] = [];
-  
+
   // Define collectors
   const collectors = [
     { name: 'O2', fn: scrapeAndStoreO2Plans },
@@ -46,42 +46,42 @@ async function runAllCollectors(): Promise<void> {
     { name: 'Giffgaff', fn: scrapeAndStoreGiffgaffPlans },
     { name: 'Smarty', fn: scrapeAndStoreSmartyPlans },
   ];
-  
+
   // Run each collector
   for (const collector of collectors) {
     try {
       logger.info({ source: collector.name }, 'Starting collector');
-      
+
       const planCount = await collector.fn();
-      
+
       results.push({
         source: collector.name,
         planCount,
         status: planCount > 0 ? 'success' : 'skipped',
       });
-      
+
       logger.info({ source: collector.name, planCount }, 'Collector complete');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       results.push({
         source: collector.name,
         planCount: 0,
         status: 'failed',
         error: errorMessage,
       });
-      
+
       logger.error({ source: collector.name, error: errorMessage }, 'Collector failed');
     }
   }
-  
+
   // Summary
   const duration = Date.now() - startTime;
   const totalPlans = results.reduce((sum, r) => sum + r.planCount, 0);
   const successCount = results.filter(r => r.status === 'success').length;
   const failedCount = results.filter(r => r.status === 'failed').length;
   const skippedCount = results.filter(r => r.status === 'skipped').length;
-  
+
   logger.info(
     {
       duration: `${(duration / 1000).toFixed(2)}s`,
@@ -93,7 +93,7 @@ async function runAllCollectors(): Promise<void> {
     },
     'Telco data collection complete'
   );
-  
+
   console.log('\n=== Telco Data Collection Summary ===');
   console.log(`Duration: ${(duration / 1000).toFixed(2)}s`);
   console.log(`Total Plans: ${totalPlans}`);
@@ -106,7 +106,7 @@ async function runAllCollectors(): Promise<void> {
     console.log(`  ${status} ${r.source}: ${r.planCount} plans ${r.error ? `(${r.error})` : ''}`);
   });
   console.log('=====================================\n');
-  
+
   // Exit with error code if any failed
   if (failedCount > 0) {
     process.exit(1);

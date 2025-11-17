@@ -15,11 +15,11 @@ async function verifyPlans() {
   try {
     // Count by source
     const sourceCount = await pool.query(`
-      SELECT source, COUNT(*) as plan_count, 
+      SELECT source, COUNT(*) as plan_count,
              MIN(scrape_timestamp) as first_scrape,
              MAX(scrape_timestamp) as last_scrape
-      FROM plans 
-      GROUP BY source 
+      FROM plans
+      GROUP BY source
       ORDER BY source
     `);
 
@@ -28,7 +28,7 @@ async function verifyPlans() {
 
     // Check plan_key values
     const keyCheck = await pool.query(`
-      SELECT 
+      SELECT
         COUNT(*) as total_plans,
         COUNT(plan_key) as plans_with_key,
         COUNT(*) - COUNT(plan_key) as plans_without_key

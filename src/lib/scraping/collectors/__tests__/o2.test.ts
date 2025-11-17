@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { extractPlanFromLocator } from '../o2';
-import type { O2Plan } from '../o2';
 
 // Mock logger
 vi.mock('../../utils/logger', () => ({
@@ -28,7 +27,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nData\n\nMONTHLY\n\n£30.00\n\nTotal monthly cost';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).not.toBeNull();
       expect(plan?.price).toBe('£30.00/month');
     });
@@ -37,7 +36,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'PLUS\n\n40GB\n\nMONTHLY\n\n£24.99\n\nTotal monthly';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.price).toBe('£24.99/month');
     });
 
@@ -45,7 +44,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n20GB\n\n£20.00 per month';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.price).toBe('£20.00/month');
     });
 
@@ -53,7 +52,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nData';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.price).toBe('Price not found');
     });
   });
@@ -63,7 +62,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nData\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.dataAllowance).toBe('100GB');
     });
 
@@ -71,7 +70,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'PLUS\n\nUnlimited\n\nData\n\nMONTHLY\n\n£38.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.dataAllowance).toBe('Unlimited');
     });
 
@@ -79,7 +78,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n500MB\n\nData\n\nMONTHLY\n\n£10.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.dataAllowance).toBe('500MB');
     });
 
@@ -87,7 +86,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.dataAllowance).toBe('Data not found');
     });
   });
@@ -97,7 +96,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\n24 Month Airtime Plan\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.contractTerm).toBe('24 months');
     });
 
@@ -105,7 +104,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'PLUS\n\n40GB\n\n12 Month Airtime Plan\n\nMONTHLY\n\n£24.99';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.contractTerm).toBe('12 months');
     });
 
@@ -113,7 +112,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n20GB\n\n1 month contract\n\nMONTHLY\n\n£20.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.contractTerm).toBe('1 months');
     });
 
@@ -121,7 +120,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.contractTerm).toBe('Contract term not found');
     });
   });
@@ -131,7 +130,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nData\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.name).toBe('CLASSIC');
     });
 
@@ -147,9 +146,9 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
         }),
       };
       card.locator = vi.fn().mockReturnValue(mockTitleLocator);
-      
+
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.name).toBe('O2 Classic Plan');
     });
 
@@ -165,7 +164,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       };
       card.locator = vi.fn().mockReturnValue(mockTitleLocator);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan?.name).toBe('O2 SIM Plan');
     });
   });
@@ -175,7 +174,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'Are you a Virgin Media broadband customer\n\nSpecial offer';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).toBeNull();
     });
 
@@ -183,7 +182,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
       const cardContent = 'CLASSIC\n\n100GB\n\nMONTHLY\n\n£30.00';
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).not.toBeNull();
     });
   });
@@ -192,7 +191,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
     it('should return null for empty card content', async () => {
       const card = createMockCard('');
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).toBeNull();
     });
 
@@ -201,7 +200,7 @@ describe('O2 Scraper - extractPlanFromLocator', () => {
         innerText: vi.fn().mockRejectedValue(new Error('Failed to get text')),
       };
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).toBeNull();
     });
 
@@ -227,7 +226,7 @@ Total monthly cost increasing to:
 Apr 2026 bill`;
       const card = createMockCard(cardContent);
       const plan = await extractPlanFromLocator(card);
-      
+
       expect(plan).toEqual({
         name: 'CLASSIC',
         price: '£24.00/month',

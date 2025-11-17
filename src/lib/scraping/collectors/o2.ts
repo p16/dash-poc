@@ -298,12 +298,12 @@ export async function extractPlanFromLocator(card: any): Promise<O2Plan | null> 
 
 /**
  * Scrape O2 plans and store in database
- * 
+ *
  * Main entry point for O2 data collection.
  * Scrapes all O2 SIM-only plans and stores raw data in the database.
- * 
+ *
  * @returns Count of plans inserted
- * 
+ *
  * @example
  * ```typescript
  * const count = await scrapeAndStoreO2Plans();
@@ -312,11 +312,11 @@ export async function extractPlanFromLocator(card: any): Promise<O2Plan | null> 
  */
 export async function scrapeAndStoreO2Plans(): Promise<number> {
   logger.info('Starting O2 plan collection');
-  
+
   try {
     // Scrape plans
     const plans = await scrapeO2();
-    
+
     // Convert to PlanData format (raw, no normalization)
     const planData: PlanData[] = plans.map(plan => ({
       name: plan.name,
@@ -325,10 +325,10 @@ export async function scrapeAndStoreO2Plans(): Promise<number> {
       contract_term: plan.contractTerm,
       url: plan.url,
     }));
-    
+
     // Insert into database
     const results = await insertPlans('O2', planData);
-    
+
     logger.info({ planCount: results.length }, 'O2 plan collection complete');
     return results.length;
   } catch (error) {

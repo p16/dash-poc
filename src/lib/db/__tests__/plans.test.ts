@@ -16,14 +16,24 @@ describe('Plan Database Operations', () => {
 
   // Cleanup after all tests
   afterAll(async () => {
-    await pool.query(`DELETE FROM plans WHERE source LIKE 'TEST%'`);
-    await pool.end();
+    try {
+      await pool.query(`DELETE FROM plans WHERE source LIKE 'TEST%'`);
+    } catch (error) {
+      console.error('Cleanup failed:', error);
+    } finally {
+      await pool.end();
+    }
   });
 
-  // Cleanup before each test
+  // Cleanup before each test with timeout protection
   beforeEach(async () => {
-    await pool.query(`DELETE FROM plans WHERE source LIKE 'TEST%'`);
-  });
+    try {
+      await pool.query(`DELETE FROM plans WHERE source LIKE 'TEST%'`);
+    } catch (error) {
+      console.error('Before each cleanup failed:', error);
+      // Don't fail the test, just log the error
+    }
+  }, 10000); // 10 second timeout
 
   describe('insertPlan', () => {
     it('should insert a single plan with raw data', async () => {
