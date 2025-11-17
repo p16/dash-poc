@@ -278,4 +278,73 @@ describe('Database Schema', () => {
       expect(result.rows[0].now).toBeInstanceOf(Date);
     });
   });
+
+  describe('constraint validation (negative tests)', () => {
+    it('should reject NULL source in plans table', async () => {
+      await expect(
+        pool.query(
+          `INSERT INTO plans (source, plan_data) VALUES (NULL, $1)`,
+          [JSON.stringify({ name: 'Test' })]
+        )
+      ).rejects.toThrow();
+    });
+
+    it('should reject NULL plan_data in plans table', async () => {
+      await expect(
+        pool.query(
+          `INSERT INTO plans (source, plan_data) VALUES ($1, NULL)`,
+          ['TEST']
+        )
+      ).rejects.toThrow();
+    });
+
+    it('should reject invalid JSONB in plans table', async () => {
+      await expect(
+        pool.query(
+          `INSERT INTO plans (source, plan_data) VALUES ($1, $2)`,
+          ['TEST', 'not-valid-json']
+        )
+      ).rejects.toThrow();
+    });
+
+    it('should reject NULL comparison_type in analyses table', async () => {
+      await expect(
+        pool.query(
+          `INSERT INTO analyses (comparison_type, brands, analysis_result, plan_ids)
+           VALUES (NULL, $1, $2, $3)`,
+          [['brand1'], JSON.stringify({ summary: 'test' }), []]
+        )
+      ).rejects.toThrow();
+    });
+
+    it('should reject NULL analysis_result in analyses table', async () => {
+      await expect(
+        pool.query(
+          `INSERT INTO analyses (comparison_type, brands, analysis_result, plan_ids)
+           VALUES ($1, $2, NULL, $3)`,
+          ['test', ['brand1'], []]
+        )
+      ).rejects.toThrow();
+    });
+
+    it('should handle concurrent writes without conflicts', async () => {
+      const planData = { name: 'Concurrent Plan', price: '£10' };
+
+      // Insert 5 plans concurrently with same data
+      const inserts = Array.from({ length: 5 }, () =>
+        pool.query(
+          `INSERT INTO plans (source, plan_data) VALUES ($1, $2) RETURNING id`,
+          ['TEST', JSON.stringify(planData)]
+        )
+      );
+
+      const results = await Promise.all(inserts);
+
+      // All should succeed with unique IDs
+      expect(results).toHaveLength(5);
+      const ids = results.map(r => r.rows[0].id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(5); // All IDs are unique
+    });
+  });
 });

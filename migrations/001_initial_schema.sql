@@ -86,8 +86,9 @@ CREATE INDEX IF NOT EXISTS idx_analyses_created_at
 -- ============================================================================
 
 COMMENT ON TABLE plans IS 'Stores plan data scraped from telco websites and aggregators. Plans identified by characteristics (source + plan_data attributes), not external IDs.';
-COMMENT ON COLUMN plans.plan_key IS 'Composite identifier for tracking plan history (e.g., O2-10GB-12months). Populated in Story 1.4 after data normalization.';
-COMMENT ON COLUMN plans.plan_data IS 'JSONB structure - flexible until Story 1.4 normalization. Contains name, price, data_allowance, contract_term, etc.';
+COMMENT ON COLUMN plans.plan_key IS 'Composite identifier for tracking plan history across scrapes. Format: {source}-{data_allowance}-{contract_term} (e.g., O2-10GB-12months, Vodafone-Unlimited-24months, Three-50GB-1month). Populated in Story 1.4 after data normalization. Nullable until then.';
+COMMENT ON COLUMN plans.plan_data IS 'JSONB structure - flexible until Story 1.4 normalization. Contains name, price, data_allowance, contract_term, etc. Example: {"name": "Big Value Bundle", "price": "£10/month", "data_allowance": "10GB", "contract_term": "12 months", "extras": ["Free calls", "EU roaming"]}.';
 
 COMMENT ON TABLE analyses IS 'Stores LLM-generated comparison analyses';
 COMMENT ON COLUMN analyses.plan_ids IS 'References to UUID ids from plans table used in this analysis';
+
