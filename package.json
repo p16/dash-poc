@@ -16,6 +16,7 @@
     "test:db": "tsx src/scripts/test-db-connection.ts",
     "scrape:poc": "tsx src/scripts/scrape-poc.ts",
     "scrape:telcos": "tsx src/scripts/scrape-telcos.ts",
+    "scrape:uswitch": "tsx src/scripts/test-uswitch.ts",
     "migrate": "tsx src/scripts/run-migration.ts"
   },
   "description": "Competitive intelligence platform for telecom pricing analysis",
