@@ -8,6 +8,7 @@
  */
 
 import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import { logger } from '../../utils/logger';
 import type { PlanData } from '../../../types/database';
 
@@ -166,8 +167,11 @@ export async function scrapeAndStoreSmartyPlans(): Promise<number> {
 
     logger.debug({ planCount: plans.length }, 'Extracted Smarty plans');
 
-    // Insert into database
-    await insertPlans('Smarty', plans);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(plans, 'Smarty');
+
+    // Insert normalized data into database
+    await insertPlans('Smarty', normalizedPlans);
 
     logger.info(
       { planCount: plans.length },

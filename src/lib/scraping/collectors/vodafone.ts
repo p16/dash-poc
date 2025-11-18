@@ -6,9 +6,10 @@
  * Story: 2.2 - Data Collectors for Telco Sources
  */
 
-import { chromium } from 'playwright';
-import { insertPlans } from '../../db/plans';
+import { chromium, Browser } from 'playwright';
 import { logger } from '../../utils/logger';
+import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import type { PlanData } from '../../../types/database';
 import type { Page, Locator } from 'playwright';
 
@@ -283,8 +284,11 @@ export async function scrapeAndStoreVodafonePlans(): Promise<number> {
 
     logger.debug({ planCount: plans.length }, 'Transformed Vodafone plans');
 
-    // Insert into database
-    await insertPlans('Vodafone', plans);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(plans, 'Vodafone');
+
+    // Insert normalized data into database
+    await insertPlans('Vodafone', normalizedPlans);
 
     logger.info(
       { planCount: plans.length },

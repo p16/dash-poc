@@ -1,9 +1,8 @@
 /**
  * Database Operations for Plan Data
  *
- * Handles insertion of raw scraped plan data into the database.
- * Data is stored without normalization (plan_key=NULL).
- * Story 2.5 will add normalization layer.
+ * Handles insertion of normalized plan data into the database.
+ * Data includes plan_key for historical tracking (Story 2.5).
  */
 
 import { getPool } from './connection';
@@ -18,19 +17,20 @@ export interface InsertPlanResult {
 }
 
 /**
- * Insert raw plan data into the database
+ * Insert plan data into the database
  *
  * @param source - Telco name (e.g., 'O2', 'Vodafone', 'Smarty')
- * @param planData - Raw scraped plan data (not normalized)
+ * @param planData - Normalized plan data with plan_key
  * @returns Inserted plan record
  *
  * @example
  * ```typescript
  * await insertPlan('O2', {
  *   name: 'Big Value Bundle',
- *   price: '£10/month',
- *   dataAllowance: '10GB',
- *   contractTerm: '12 months'
+ *   price: '£10.00',
+ *   data_allowance: '10GB',
+ *   contract_term: '12 months',
+ *   plan_key: 'O2-10GB-12months'
  * });
  * ```
  */
@@ -41,14 +41,17 @@ export async function insertPlan(
   const pool = getPool();
 
   try {
+    // Extract plan_key from planData (populated by normalization)
+    const planKey = (planData as any).plan_key || null;
+
     const result = await pool.query<InsertPlanResult>(
       `INSERT INTO plans (source, plan_data, plan_key)
-       VALUES ($1, $2, NULL)
+       VALUES ($1, $2, $3)
        RETURNING id, source, plan_data, scrape_timestamp`,
-      [source, JSON.stringify(planData)]
+      [source, JSON.stringify(planData), planKey]
     );
 
-    logger.debug({ source, planId: result.rows[0].id }, 'Plan inserted');
+    logger.debug({ source, planId: result.rows[0].id, planKey }, 'Plan inserted');
     return result.rows[0];
   } catch (error) {
     logger.error({ source, planData, error }, 'Failed to insert plan');
@@ -89,11 +92,14 @@ export async function insertPlans(
     const results: InsertPlanResult[] = [];
 
     for (const planData of plans) {
+      // Extract plan_key from normalized planData
+      const planKey = (planData as any).plan_key || null;
+
       const result = await client.query<InsertPlanResult>(
         `INSERT INTO plans (source, plan_data, plan_key)
-         VALUES ($1, $2, NULL)
+         VALUES ($1, $2, $3)
          RETURNING id, source, plan_data, scrape_timestamp`,
-        [source, JSON.stringify(planData)]
+        [source, JSON.stringify(planData), planKey]
       );
 
       results.push(result.rows[0]);

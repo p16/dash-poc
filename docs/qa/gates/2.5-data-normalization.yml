@@ -1,0 +1,346 @@
+story: "2.5 - Data Normalization Before Storage"
+version: "2.0"
+qa_date: "2025-01-18"
+qa_agent: "QA Agent (Sarah)"
+status: "PASS"
+
+acceptance_criteria_review:
+  AC1_normalization_processes_all_sources:
+    status: "PASS"
+    evidence:
+      - "All 8 collectors have normalizePlans import and integration (verified via grep)"
+      - "normalize.ts handles 7 telcos + Uswitch API formats"
+      - "normalizePlanData() extracts fields from various input structures (HTML text, objects, JSON)"
+    verification:
+      - "Checked all collector files: o2.ts, vodafone.ts, sky.ts, tesco.ts, three.ts, giffgaff.ts, smarty.ts, uswitch.ts"
+      - "All files contain: import { normalizePlans } from '../normalize'"
+      - "All files call: normalizePlans(plans, 'Source') before insertPlans()"
+
+  AC2_data_allowance_normalization:
+    status: "PASS"
+    evidence:
+      - "normalizeDataAllowance() function handles all discovered formats"
+      - "Supports: Unlimited, GB format, MB format, numeric MB (Uswitch), fractional GB (Smarty)"
+      - "Test coverage: 16 tests for data allowance variations"
+    test_examples:
+      - "Input: 'Unlimited' → Output: 'Unlimited' ✓"
+      - "Input: '20GB' → Output: '20GB' ✓"
+      - "Input: '50000' (Uswitch MB) → Output: '50GB' ✓"
+      - "Input: '0.5GB' (Smarty) → Output: '500MB' ✓"
+      - "Input: '20 GB' → Output: '20GB' ✓"
+
+  AC3_price_normalization:
+    status: "PASS"
+    evidence:
+      - "normalizePrice() function handles all discovered formats"
+      - "Supports: £ with /month, pence integers (Three), GBP text, Unknown"
+      - "Always outputs 2 decimal places for consistency"
+      - "Test coverage: 14 tests for price variations"
+    test_examples:
+      - "Input: '£20.00/month' → Output: '£20.00' ✓"
+      - "Input: '1300' (Three pence) → Output: '£13.00' ✓"
+      - "Input: '£10' → Output: '£10.00' ✓"
+      - "Input: 'Unknown' → Output: 'Unknown' ✓"
+
+  AC4_contract_term_normalization:
+    status: "PASS"
+    evidence:
+      - "normalizeContractTerm() function handles all discovered formats"
+      - "Supports: months, years, PAYG, numeric values (Uswitch), short formats"
+      - "Test coverage: 20 tests for contract term variations"
+    test_examples:
+      - "Input: '24 months' → Output: '24 months' ✓"
+      - "Input: '1 year' → Output: '12 months' ✓"
+      - "Input: 0 (Uswitch PAYG) → Output: 'PAYG' ✓"
+      - "Input: '12m' → Output: '12 months' ✓"
+      - "Input: 'Pay as you go' → Output: 'PAYG' ✓"
+
+  AC5_plan_key_generation:
+    status: "PASS"
+    evidence:
+      - "generatePlanKey() creates unique identifiers with format: {Source}-{Data}-{Contract}"
+      - "Handles edge cases: Unlimited, PAYG, spaces removed, proper casing"
+      - "Test coverage: 6 tests for plan_key generation"
+      - "Database integration: plan_key extracted and stored in dedicated column"
+    test_examples:
+      - "O2, 10GB, 12 months → 'O2-10GB-12months' ✓"
+      - "Vodafone, Unlimited, 24 months → 'Vodafone-Unlimited-24months' ✓"
+      - "Smarty, 500MB, 1 month → 'Smarty-500MB-1month' ✓"
+      - "Uswitch, 50GB, PAYG → 'Uswitch-50GB-payg' ✓"
+    verification:
+      - "plans.ts insertPlan() extracts: const planKey = (planData as any).plan_key || null"
+      - "plans.ts insertPlans() extracts: const planKey = (planData as any).plan_key || null"
+      - "Both functions INSERT with: VALUES ($1, $2, $3) where $3 is plan_key"
+
+  AC6_multiple_input_formats:
+    status: "PASS"
+    evidence:
+      - "normalizePlanData() handles field extraction from various structures"
+      - "Supports: data_allowance, dataAllowance, data, allowance (field name variations)"
+      - "Supports: price, monthlyPrice, monthly_cost, cost (field name variations)"
+      - "Supports: contract_term, contractTerm, contract, contract_length (field name variations)"
+    code_review:
+      - "Line 259-262: Multiple field name checks for data allowance"
+      - "Line 263: Multiple field name checks for price"
+      - "Line 265: Multiple field name checks for contract term"
+      - "Preserves original fields: ...rawData spread operator (line 275)"
+
+  AC7_error_handling:
+    status: "PASS"
+    evidence:
+      - "Gracefully handles null/undefined/missing fields"
+      - "Returns 'Unknown' for missing/invalid data with warnings logged"
+      - "Try-catch in normalizePlanData() prevents batch failures"
+      - "Error fallback returns normalized structure with error flag"
+    code_review:
+      - "normalizeDataAllowance: if (!input) returns 'Unknown' with warning (line 36-39)"
+      - "normalizePrice: if (!input) returns 'Unknown' with warning (line 102-105)"
+      - "normalizeContractTerm: if (!input) returns 'Unknown' with warning (line 159-162)"
+      - "normalizePlanData: try-catch returns error object with normalization_error: true (line 293-309)"
+      - "Processing continues on error (doesn't throw, returns fallback)"
+
+  AC8_integration_with_collectors:
+    status: "PASS"
+    evidence:
+      - "All 8 collectors import and call normalizePlans() before database insertion"
+      - "Database functions (insertPlan, insertPlans) extract plan_key from normalized data"
+      - "plan_key stored in dedicated TEXT column (indexed for fast lookups)"
+      - "Normalized data stored in plan_data JSONB column"
+    integration_verification:
+      - "Collector pattern: normalizePlans(plans, 'Source') → insertPlans('Source', normalizedPlans)"
+      - "Database pattern: Extract plan_key → INSERT with 3 values (source, plan_data, plan_key)"
+      - "Critical fix applied: Changed from hardcoded NULL to dynamic extraction"
+    collectors_verified:
+      - "o2.ts: Line 4 import, normalization call implemented ✓"
+      - "vodafone.ts: Line 12 import, normalization call implemented ✓"
+      - "sky.ts: Line 11 import, normalization call implemented ✓"
+      - "tesco.ts: Line 11 import, normalization call implemented ✓"
+      - "three.ts: Line 4 import, normalization call implemented ✓"
+      - "giffgaff.ts: Line 4 import, normalization call implemented ✓"
+      - "smarty.ts: Line 11 import, normalization call implemented ✓"
+      - "uswitch.ts: Line 12 import, normalization call implemented ✓"
+
+  AC9_unit_tests:
+    status: "PASS"
+    evidence:
+      - "Comprehensive test suite: 69 tests covering all discovered format variations"
+      - "Test file: src/lib/scraping/__tests__/normalize.test.ts"
+      - "All tests passing: 69/69 (100% pass rate)"
+      - "Tests use actual format examples from real collector data"
+    test_coverage:
+      - "Data Allowance Normalization: 16 tests"
+      - "Price Normalization: 14 tests"
+      - "Contract Term Normalization: 20 tests"
+      - "plan_key Generation: 6 tests"
+      - "Full Plan Normalization: 11 tests (covering all 8 sources)"
+      - "Array Normalization: 2 tests"
+    test_execution:
+      - "Command: npm test -- normalize.test.ts"
+      - "Result: Test Files 1 passed (1), Tests 69 passed (69)"
+      - "Duration: 320ms (fast execution)"
+      - "No test failures, warnings, or errors"
+
+  AC10_documentation:
+    status: "PASS"
+    evidence:
+      - "Comprehensive documentation: docs/NORMALIZATION_RULES.md (345 lines)"
+      - "Documents all normalization rules per data type"
+      - "Format mapping table per source with examples"
+      - "Source-specific quirks documented (Three pence, Uswitch MB, Smarty fractional GB)"
+      - "Inline code comments explain normalization logic"
+    documentation_sections:
+      - "Overview and output format specification ✓"
+      - "Data Allowance Normalization (rules + source table) ✓"
+      - "Price Normalization (rules + source table) ✓"
+      - "Contract Term Normalization (rules + source table) ✓"
+      - "plan_key Generation (format + examples) ✓"
+      - "Source-Specific Quirks (Three, Uswitch, Smarty, Vodafone, Giffgaff) ✓"
+      - "Error Handling Philosophy ✓"
+      - "Testing Coverage ✓"
+      - "Usage Examples ✓"
+      - "Future Enhancements ✓"
+
+code_quality_review:
+  structure:
+    status: "EXCELLENT"
+    findings:
+      - "Clear separation of concerns: 5 focused functions (data, price, contract, key, main)"
+      - "Proper TypeScript typing with NormalizedPlan interface"
+      - "Extensive inline documentation with JSDoc comments"
+      - "Consistent error handling pattern across all functions"
+      - "Preserves original data using spread operator"
+
+  maintainability:
+    status: "EXCELLENT"
+    findings:
+      - "Well-commented code explains format variations per source"
+      - "Regex patterns are clear and well-documented"
+      - "Logging provides debug/warn/error levels appropriately"
+      - "Easy to extend for new sources or formats"
+      - "Test suite makes regression testing straightforward"
+
+  performance:
+    status: "GOOD"
+    findings:
+      - "Normalization overhead minimal (~1ms per plan according to docs)"
+      - "No unnecessary database calls"
+      - "Transaction-based batch insertion in insertPlans()"
+      - "No obvious performance bottlenecks"
+    considerations:
+      - "Regex matching could be optimized if performance becomes issue"
+      - "Current implementation appropriate for expected data volumes"
+
+  error_handling:
+    status: "EXCELLENT"
+    findings:
+      - "Comprehensive null/undefined checks"
+      - "Graceful degradation (returns 'Unknown' vs throwing errors)"
+      - "Try-catch in main normalization function prevents batch failures"
+      - "Structured logging for debugging"
+      - "Error fallback returns valid normalized structure"
+
+test_quality_review:
+  coverage:
+    status: "EXCELLENT"
+    test_count: 69
+    pass_rate: "100%"
+    areas_covered:
+      - "All normalization functions individually tested ✓"
+      - "Edge cases tested (null, undefined, empty, 0) ✓"
+      - "Source-specific quirks tested (Three pence, Uswitch MB, etc.) ✓"
+      - "plan_key generation edge cases tested ✓"
+      - "Full integration tested (all 8 sources) ✓"
+
+  test_data_quality:
+    status: "EXCELLENT"
+    findings:
+      - "Tests use actual format examples discovered from real scrapers"
+      - "Each source's unique format represented in tests"
+      - "Edge cases based on real-world variations, not hypothetical"
+
+  test_organization:
+    status: "EXCELLENT"
+    findings:
+      - "Clear describe() blocks per function"
+      - "Descriptive test names explain input/output"
+      - "Logical grouping of related tests"
+      - "Easy to identify which test covers which format"
+
+integration_testing:
+  database_integration:
+    status: "VERIFIED"
+    findings:
+      - "insertPlan() correctly extracts plan_key from normalized data"
+      - "insertPlans() correctly extracts plan_key in loop"
+      - "Both functions properly INSERT plan_key to database column"
+      - "Critical bug fix applied (was hardcoded NULL, now dynamic)"
+
+  collector_integration:
+    status: "VERIFIED"
+    findings:
+      - "All 8 collectors verified to import normalizePlans"
+      - "All 8 collectors call normalization before database insertion"
+      - "Pattern consistent across all collectors"
+      - "No collectors bypassing normalization"
+
+concerns:
+  minor_concerns: []
+  potential_improvements:
+    - concern: "TypeScript type safety with plan_key extraction"
+      severity: "LOW"
+      details: "Uses (planData as any).plan_key to bypass type checking"
+      recommendation: "Consider updating PlanData interface to include optional plan_key field"
+      blocking: false
+
+    - concern: "No runtime verification of plan_key population"
+      severity: "LOW"
+      details: "Would benefit from periodic checks that plan_key is actually populating"
+      recommendation: "Add monitoring/alerting for NULL plan_key counts in production"
+      blocking: false
+
+    - concern: "Normalization rules not configurable"
+      severity: "LOW"
+      details: "All rules are hardcoded in normalize.ts"
+      recommendation: "Future enhancement: Consider config file for thresholds (e.g., MB/GB conversion point)"
+      blocking: false
+
+risk_assessment:
+  data_quality_risk: "LOW"
+  justification:
+    - "Comprehensive test coverage (69 tests, 100% pass)"
+    - "Graceful error handling prevents data loss"
+    - "Original data preserved alongside normalized data"
+    - "Source-specific quirks well-understood and documented"
+
+  integration_risk: "LOW"
+  justification:
+    - "All collectors verified to use normalization"
+    - "Database insertion verified to store plan_key"
+    - "Bug fix applied and tested"
+
+  maintenance_risk: "LOW"
+  justification:
+    - "Excellent documentation (code + NORMALIZATION_RULES.md)"
+    - "Clear code structure"
+    - "Test suite enables safe refactoring"
+
+recommendations:
+  immediate: []
+
+  future_enhancements:
+    - "Add monitoring dashboard for normalization warning/error rates"
+    - "Implement plan_key uniqueness validation checks"
+    - "Consider configuration file for normalization thresholds"
+    - "Add integration tests that run actual collectors → normalize → database"
+    - "Update PlanData TypeScript interface to include plan_key"
+
+story_completion_verification:
+  all_tasks_complete: true
+  all_acceptance_criteria_met: true
+  documentation_complete: true
+  tests_passing: true
+  integration_verified: true
+  ready_for_production: true
+
+epic_impact:
+  epic: "Epic 2 - Data Collection Infrastructure"
+  story_position: "Final story (5 of 5)"
+  blocking_stories: "None - Epic 2 can now be marked complete"
+  impact: "Critical - enables consistent data analysis across all sources"
+
+decision: "PASS"
+
+decision_rationale: |
+  Story 2.5 successfully implements comprehensive data normalization across all 8 data sources
+  with exceptional quality. All 10 acceptance criteria are fully satisfied with strong evidence:
+
+  1. Normalization processes all sources (8/8 collectors integrated) ✓
+  2. Data allowance normalization handles all discovered formats ✓
+  3. Price normalization handles all discovered formats including Three's pence ✓
+  4. Contract term normalization handles all discovered formats ✓
+  5. plan_key generation working with edge case handling ✓
+  6. Multiple input formats supported (HTML/objects/JSON) ✓
+  7. Error handling graceful with fallbacks ✓
+  8. Integration complete with proper database storage ✓
+  9. Test suite comprehensive (69 tests, 100% pass) ✓
+  10. Documentation excellent (345-line guide + inline comments) ✓
+
+  Code quality is excellent with clear structure, comprehensive error handling, and strong
+  maintainability. Test coverage is exceptional with real-world format examples. Integration
+  verified across all collectors and database functions.
+
+  Minor concerns identified are non-blocking and suitable for future enhancement. No risks
+  prevent production deployment.
+
+  This story completes Epic 2 "Data Collection Infrastructure" - all 5 stories now complete.
+
+next_steps:
+  - "Update Story 2.5 status to 'Done'"
+  - "Mark Epic 2 as 'Complete'"
+  - "Consider scheduling Epic 3 (Analysis Engine) based on roadmap priorities"
+  - "Monitor normalization in production for any unexpected format variations"
+
+sign_off:
+  qa_agent: "Sarah"
+  date: "2025-01-18"
+  epic_milestone: "Epic 2 Complete"

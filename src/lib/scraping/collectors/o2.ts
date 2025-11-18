@@ -1,6 +1,7 @@
 import { chromium, Browser, Page } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import type { PlanData } from '../../../types/database';
 
 /**
@@ -317,7 +318,7 @@ export async function scrapeAndStoreO2Plans(): Promise<number> {
     // Scrape plans
     const plans = await scrapeO2();
 
-    // Convert to PlanData format (raw, no normalization)
+    // Convert to PlanData format (raw, before normalization)
     const planData: PlanData[] = plans.map(plan => ({
       name: plan.name,
       price: plan.price,
@@ -326,8 +327,11 @@ export async function scrapeAndStoreO2Plans(): Promise<number> {
       url: plan.url,
     }));
 
-    // Insert into database
-    const results = await insertPlans('O2', planData);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(planData, 'O2');
+
+    // Insert normalized data into database
+    const results = await insertPlans('O2', normalizedPlans);
 
     logger.info({ planCount: results.length }, 'O2 plan collection complete');
     return results.length;

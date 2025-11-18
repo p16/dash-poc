@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import type { PlanData } from '../../../types/database';
 
 /**
@@ -144,8 +145,11 @@ export async function scrapeAndStoreGiffgaffPlans(): Promise<number> {
     // Convert to PlanData format
     const planData: PlanData[] = rawPlans.map(transformGiffgaffPlan);
 
-    // Insert into database
-    const results = await insertPlans('Giffgaff', planData);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(planData, 'Giffgaff');
+
+    // Insert normalized data into database
+    const results = await insertPlans('Giffgaff', normalizedPlans);
 
     logger.info({ planCount: results.length }, 'Giffgaff plan collection complete');
     return results.length;

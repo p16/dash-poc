@@ -9,6 +9,7 @@
 
 import { insertPlans } from '../../db/plans';
 import { logger } from '../../utils/logger';
+import { normalizePlans } from '../normalize';
 import type { PlanData } from '../../../types/database';
 
 interface UswitchDeal {
@@ -572,8 +573,11 @@ export async function scrapeAndStoreUswitchPlans(): Promise<number> {
 
     logger.debug({ planCount: plans.length }, 'Transformed Uswitch deals');
 
-    // Insert into database
-    await insertPlans('Uswitch', plans);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(plans, 'Uswitch');
+
+    // Insert normalized data into database
+    await insertPlans('Uswitch', normalizedPlans);
 
     logger.info(
       { planCount: plans.length },

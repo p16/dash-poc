@@ -8,6 +8,7 @@
 
 import { chromium } from 'playwright';
 import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import { logger } from '../../utils/logger';
 import type { PlanData } from '../../../types/database';
 import type { Page } from 'playwright';
@@ -168,8 +169,11 @@ export async function scrapeAndStoreSkyPlans(): Promise<number> {
 
     logger.debug({ planCount: plans.length }, 'Transformed Sky plans');
 
-    // Insert into database
-    await insertPlans('Sky', plans);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(plans, 'Sky');
+
+    // Insert normalized data into database
+    await insertPlans('Sky', normalizedPlans);
 
     logger.info(
       { planCount: plans.length },

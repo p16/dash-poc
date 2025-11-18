@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
+import { normalizePlans } from '../normalize';
 import type { PlanData } from '../../../types/database';
 
 /**
@@ -386,8 +387,11 @@ export async function scrapeAndStoreThreePlans(): Promise<number> {
     // Transform to PlanData format
     const planData: PlanData[] = allPlans.map(transformThreePlan);
 
-    // Insert into database
-    const results = await insertPlans('Three', planData);
+    // Normalize plans before database insertion
+    const normalizedPlans = normalizePlans(planData, 'Three');
+
+    // Insert normalized data into database
+    const results = await insertPlans('Three', normalizedPlans);
     logger.info({ source: 'Three', planCount: results.length }, 'Successfully inserted plans');
 
     logger.info({ planCount: results.length }, 'Three plan collection complete');
