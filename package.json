@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:db": "tsx src/scripts/test-db-connection.ts",
+    "test:gemini": "tsx src/scripts/test-gemini.ts",
     "scrape": "tsx src/scripts/scrape.ts",
     "scrape:poc": "tsx src/scripts/scrape-poc.ts",
     "scrape:telcos": "tsx src/scripts/scrape-telcos.ts",
@@ -22,6 +23,7 @@
   },
   "description": "Competitive intelligence platform for telecom pricing analysis",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.3",

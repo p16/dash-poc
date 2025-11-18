@@ -139,25 +139,36 @@ describe('Database Schema', () => {
     });
 
     it('should track plan history using plan_key', async () => {
-      const planKey = 'TEST-10GB-12months-history-test';
+      // Use unique plan key and source to avoid conflicts with other tests and cleanup
+      const testSource = `TEST-HISTORY-${Date.now()}`;
+      const planKey = `plan-key-${Date.now()}`;
 
-      // Clean up any existing test data with this plan_key
-      await pool.query('DELETE FROM plans WHERE plan_key = $1', [planKey]);
-
-      // Insert same plan at different times with different prices
-      await pool.query(
+      // Insert first version and verify it was created
+      const insert1 = await pool.query(
         `INSERT INTO plans (source, plan_key, plan_data)
-         VALUES ($1, $2, $3)`,
-        ['TEST', planKey, JSON.stringify({ price: '£10' })]
+         VALUES ($1, $2, $3)
+         RETURNING id, scrape_timestamp`,
+        [testSource, planKey, JSON.stringify({ name: 'Plan V1', price: '£10' })]
       );
+      expect(insert1.rows).toHaveLength(1);
+      const id1 = insert1.rows[0].id;
 
       // Small delay to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 150));
 
-      await pool.query(
+      // Insert second version and verify it was created
+      const insert2 = await pool.query(
         `INSERT INTO plans (source, plan_key, plan_data)
-         VALUES ($1, $2, $3)`,
-        ['TEST', planKey, JSON.stringify({ price: '£9' })]
+         VALUES ($1, $2, $3)
+         RETURNING id, scrape_timestamp`,
+        [testSource, planKey, JSON.stringify({ name: 'Plan V2', price: '£9' })]
+      );
+      expect(insert2.rows).toHaveLength(1);
+      const id2 = insert2.rows[0].id;
+
+      // Verify timestamps are different
+      expect(insert1.rows[0].scrape_timestamp.getTime()).not.toEqual(
+        insert2.rows[0].scrape_timestamp.getTime()
       );
 
       // Query plan history
@@ -169,8 +180,15 @@ describe('Database Schema', () => {
       );
 
       expect(result.rows).toHaveLength(2);
-      expect(result.rows[0].plan_data.price).toBe('£9'); // Most recent
-      expect(result.rows[1].plan_data.price).toBe('£10'); // Older
+      expect(result.rows[0].id).toBe(id2);
+      expect(result.rows[0].plan_data.name).toBe('Plan V2'); // Most recent
+      expect(result.rows[0].plan_data.price).toBe('£9');
+      expect(result.rows[1].id).toBe(id1);
+      expect(result.rows[1].plan_data.name).toBe('Plan V1'); // Older
+      expect(result.rows[1].plan_data.price).toBe('£10');
+
+      // Clean up this test's data
+      await pool.query('DELETE FROM plans WHERE source = $1', [testSource]);
     });
   });
 

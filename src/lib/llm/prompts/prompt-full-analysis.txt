@@ -1,0 +1,43 @@
+Act as an analyst to produce a live, O2-focused competitive analysis of UK SIM-only plans.
+Include analysis on maximising conversion.
+The entire response MUST be a single, valid JSON object. Remember to always use double quotes for properties names, and the : between property name and value.
+Do not include any text, explanations, or markdown outside of the JSON block itself.
+Consider the plans provided in the files attached to this prompt.
+The file name will tell you from which competitor they belong to. The only different one is the one from uswitch that will contain different plans from different companies. Treat them all as competitor of O2 (note: also uswitch O2 plans should be seen as competing with the main o2 plans from the O2 main file).
+For your analysis, consider ALL plans in the files attached to this request.
+
+
+Time & Locale Constraints: Assume current date/time in Europe/London timezone. Currency is GBP (£).
+
+Scope & Data Collection Rules (Simulated Browsing/Lookup):
+Consider at least one competitive plan for 30-day, 12-month, and 24-month terms where available.
+Capture: Brand, Contract, Data (GB/Unlimited), Roaming (None/EU/Global), Price (£/mo), Extras (concise, comma-separated), Source URL, and Notes.
+
+Scoring Model (0–100): Calculate the Competitiveness Score for every plan using the following weighted sum:
+- Data Allowance: 40% (Unlimited=100; otherwise linear scale by GB).
+- Roaming: 15% (None=0, EU=50, Global=100).
+- Extras: 15% (None=0, Basic=50, Premium=100).
+- Contract Flexibility: 10% (30-day=100, 12-month=50, 24-month=0; interpolate other terms).
+- Price: 20% (Lower price is better; based on range MaxPrice – MinPrice).
+
+IMPORTANT: All competitiveness_score values MUST be numbers between 0 and 100 (inclusive).
+
+O2 Strategy Layer: Analyze O2's position across data tiers (Low: ≤20 GB; Medium: 21–100 GB; Unlimited: >100 GB/Unlimited). Identify gaps, recommend strategic actions, and appropriate pricing.
+
+JSON Output Mandate (STRICT FORMAT):
+The JSON object must contain the following top-level fields:
+- analysis_timestamp: (String: Current Date/Time in Europe/London timezone).
+- currency: (String: 'GBP').
+- overall_competitive_sentiments: (Array of Objects: 5 to 10 high-level insights, 3 fields: score, sentiment, rationale; do not change the fields names; focus on how O2 could improve; put a higher score on what O2 needs to improve; avoid single word for the "sentiment" field, be specific; the "rationale" field should contain the description but also suggestion on how to improve).
+- o2_products_analysis: (REQUIRED: Analyze at least 5 O2 products, Array of Objects: Details and competitive context for all the O2 plans analyzed; group plans based on the data (GB) tier, suggest product price adjustments).
+- full_competitive_dataset_all_plans: (Array of Objects: The complete, flat dataset of ALL plans considered in the analysis).
+- products_not_considered: if you decide to not consider some plans, provide a justification in this field (Array of objects, fields for each object are: product and details; product will contain the company name and the name of the plan not considered; details will contain why it was not considered as part of the analysis)
+
+Nested Structure Requirements:
+- Each object within o2_products_analysis must contain: product_name, data_tier, roaming_tier, an object named product_breakdown (containing all O2 plan data and score), an array of objects named comparable_products (listing direct rivals with all plan data, fields to use: brand, contract, data, roaming, price_per_month_GBP, extras, speed, notes, competitiveness_score, source_URL, source (the name of the file from which it came from, examples: o2, smarty, vodafone, three, giffgaff, sky, tesco, uswitch); do not change their names), and an array of strings named o2_product_sentiments (containing specific O2 strategy notes), o2_product_changes (what should O2 change to be more competitive, array of strings, take into consideration price changes, extras or data allowance), price_suggestions (array of objects containing suggestions on how O2 should change their prices to beat or better compete with its competitors; fields for each object are: motivation, price), source (the name of the file from which it came from, examples: o2, smarty, vodafone, three, giffgaff, sky, tesco, uswitch).
+- Each object within full_competitive_dataset_all_plans must be flat and contain: brand, contract, data, roaming, price_per_month_GBP (Number), extras, speed, notes, competitiveness_score (Number), source_URL, source (the name of the file from which it came from, examples: o2, smarty, vodafone, three, giffgaff, sky, tesco, uswitch).
+- When you are setting the "Brand" in any of the above objects, if the source is "uswitch" then the brand should be "<brand> uswitch" (examples: "o2 uswitch", "vodafone uswitch", "three uswitch", etc.)
+
+Source File Naming Convention:
+Plans will come from these source files: o2.json, smarty.json, vodafone.json, three.json, giffgaff.json, sky.json, tesco.json, uswitch.json
+The "source" field in your JSON output should match the filename without the .json extension (e.g., "o2", "smarty", "uswitch").
