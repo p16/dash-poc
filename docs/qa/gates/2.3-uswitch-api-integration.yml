@@ -11,7 +11,7 @@ reviewer: "Quinn (Test Architect)"
 updated: "2025-11-17T00:00:00Z"
 
 # Waiver applied for unit tests only
-waiver: 
+waiver:
   active: true
   reason: "Unit/integration tests waived for this sprint - manual testing sufficient. Core functionality verified working. Tests can be added in future sprint if needed."
   approved_by: "QA (Quinn)"
@@ -24,14 +24,14 @@ top_issues:
     suggested_action: "Add \"scrape:uswitch\": \"tsx src/scripts/test-uswitch.ts\" to package.json scripts section"
     status: RESOLVED
     resolution: "✅ Script added to package.json line 19, verified working with 135 deals collected"
-    
+
   - id: "REQ-002"
     severity: medium
     finding: "Deduplication strategy unclear (AC #7) - no explicit deduplication logic found"
     suggested_action: "Document deduplication approach or explicitly defer to Story 2.5 (Data Normalization) which will implement plan_key and deduplication"
     status: RESOLVED
     resolution: "✅ Implementation note added to AC #7 documenting that cross-source deduplication is deferred to Story 2.5 with clear rationale"
-    
+
   - id: "TEST-001"
     severity: low
     finding: "No unit/integration tests - story specifies tests/integration/scraping/collectors/uswitch.test.ts"
@@ -68,16 +68,16 @@ evidence:
 
 # Non-functional requirements validation
 nfr_validation:
-  security: 
+  security:
     status: PASS
     notes: "No credentials needed, proper headers, rate limiting implemented"
-  performance: 
+  performance:
     status: PASS
     notes: "135 deals in 23s is acceptable, rate limiting adds respectful 1s delays"
-  reliability: 
+  reliability:
     status: PASS
     notes: "Error handling present, safety limits prevent infinite loops"
-  maintainability: 
+  maintainability:
     status: PASS
     notes: "Code quality excellent, test gap acceptable as technical debt"
 
@@ -93,9 +93,9 @@ history:
 # Recommendations - Updated
 recommendations:
   immediate: []  # All critical items resolved
-      
+
   recommended: []  # Unit tests waived for this sprint
-      
+
   future:  # Nice to have
     - action: "Add unit tests with mocked GraphQL responses (if team wants to reduce technical debt)"
       refs: ["tests/integration/scraping/collectors/uswitch.test.ts"]
@@ -111,11 +111,11 @@ quality_score: 90
 # Decision path - Updated
 decision_rationale: |
   POST-FIX RE-REVIEW:
-  
+
   ✅ ALL CRITICAL ISSUES RESOLVED:
   1. npm script added to package.json - VERIFIED WORKING
   2. Deduplication strategy documented in AC #7 - CLEAR AND APPROPRIATE
-  
+
   The Uswitch GraphQL integration is production-ready:
   ✓ All 10 acceptance criteria satisfied (100%)
   ✓ Comprehensive GraphQL query with proper fragments
@@ -124,14 +124,14 @@ decision_rationale: |
   ✓ Proper error handling and logging
   ✓ Successfully tested (135 deals collected via npm script)
   ✓ Deduplication strategy clearly documented (defer to Story 2.5)
-  
+
   Unit tests remain as technical debt but are WAIVED for this sprint:
   - Manual testing is sufficient for current scope
   - Core functionality verified and working
   - Can be added in future sprint if needed
-  
+
   GATE = PASS (with test waiver)
-  
+
   Story is ready to be marked "Done" ✅
 
 # Next steps - Updated
