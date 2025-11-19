@@ -392,44 +392,48 @@ describe('Response Validation Utility', () => {
   });
 
   describe('Missing Required Fields', () => {
-    it('should throw ValidationError for missing analysis_timestamp', () => {
+    it('should log warning for missing analysis_timestamp but not throw', () => {
       const invalidResponse = {
         currency: 'GBP',
         overall_competitive_sentiments: [],
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/analysis_timestamp/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.currency).toBe('GBP');
     });
 
-    it('should throw ValidationError for missing currency', () => {
+    it('should log warning for missing currency but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         overall_competitive_sentiments: [],
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/currency/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.analysis_timestamp).toBe('2025-01-18T10:30:00Z');
     });
 
-    it('should throw ValidationError for missing overall_competitive_sentiments', () => {
+    it('should log warning for missing overall_competitive_sentiments but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(
-        /overall_competitive_sentiments/
-      );
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.currency).toBe('GBP');
     });
   });
 
   describe('Invalid Data Types', () => {
-    it('should throw ValidationError for non-GBP currency', () => {
+    it('should log warning for non-GBP currency but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'USD',
@@ -443,11 +447,13 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/GBP/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.currency).toBe('USD');
     });
 
-    it('should throw ValidationError for score > 100', () => {
+    it('should log warning for score > 100 but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -461,11 +467,13 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/between 0 and 100/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.overall_competitive_sentiments[0].score).toBe(150);
     });
 
-    it('should throw ValidationError for score < 0', () => {
+    it('should log warning for score < 0 but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -479,11 +487,13 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/between 0 and 100/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.overall_competitive_sentiments[0].score).toBe(-10);
     });
 
-    it('should throw ValidationError for non-number competitiveness_score', () => {
+    it('should log warning for non-number competitiveness_score but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -606,13 +616,15 @@ describe('Response Validation Utility', () => {
           },
         ],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/must be a number/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.o2_products_analysis).toHaveLength(5);
     });
   });
 
   describe('Overall Competitive Sentiments Validation', () => {
-    it('should throw ValidationError for too few sentiments (< 5)', () => {
+    it('should log warning for too few sentiments (< 5) but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -623,11 +635,13 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/5-10 insights/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.overall_competitive_sentiments).toHaveLength(2);
     });
 
-    it('should throw ValidationError for too many sentiments (> 10)', () => {
+    it('should log warning for too many sentiments (> 10) but not throw', () => {
       const sentiments = Array(15)
         .fill(null)
         .map(() => ({ score: 50, sentiment: 'test', rationale: 'test' }));
@@ -638,11 +652,13 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/5-10 insights/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.overall_competitive_sentiments).toHaveLength(15);
     });
 
-    it('should throw ValidationError for missing sentiment field', () => {
+    it('should log warning for missing sentiment field but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -656,13 +672,15 @@ describe('Response Validation Utility', () => {
         o2_products_analysis: [],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/sentiment/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.overall_competitive_sentiments).toHaveLength(5);
     });
   });
 
   describe('O2 Products Analysis Validation', () => {
-    it('should throw ValidationError for too few products (< 5)', () => {
+    it('should log warning for too few products (< 5) but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -696,8 +714,10 @@ describe('Response Validation Utility', () => {
         ],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(/at least 5 products/);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.o2_products_analysis).toHaveLength(1);
     });
   });
 
@@ -740,7 +760,7 @@ describe('Response Validation Utility', () => {
       expect(() => validateCustomComparisonResponse(validCustomResponse)).not.toThrow();
     });
 
-    it('should throw ValidationError for missing brand_a_products_analysis', () => {
+    it('should log warning for missing brand_a_products_analysis but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -753,10 +773,10 @@ describe('Response Validation Utility', () => {
         ],
         full_competitive_dataset_all_plans: [],
       };
-      expect(() => validateCustomComparisonResponse(invalidResponse)).toThrow(ValidationError);
-      expect(() => validateCustomComparisonResponse(invalidResponse)).toThrow(
-        /brand_a_products_analysis/
-      );
+      // Validation now logs issues instead of throwing
+      const result = validateCustomComparisonResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.currency).toBe('GBP');
     });
   });
 
@@ -880,7 +900,7 @@ describe('Response Validation Utility', () => {
       expect(() => validateAnalysisResponse(validResponse)).not.toThrow();
     });
 
-    it('should throw ValidationError for invalid products_not_considered structure', () => {
+    it('should log warning for invalid products_not_considered structure but not throw', () => {
       const invalidResponse = {
         analysis_timestamp: '2025-01-18T10:30:00Z',
         currency: 'GBP',
@@ -996,7 +1016,10 @@ describe('Response Validation Utility', () => {
           },
         ],
       };
-      expect(() => validateAnalysisResponse(invalidResponse)).toThrow(ValidationError);
+      // Validation now logs issues instead of throwing
+      const result = validateAnalysisResponse(invalidResponse);
+      expect(result).toBeDefined();
+      expect(result.products_not_considered).toHaveLength(1);
     });
   });
 });

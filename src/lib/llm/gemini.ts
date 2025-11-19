@@ -149,8 +149,14 @@ export async function callGeminiAPI(
 
     const data: GeminiResponse = await response.json();
 
+    // Log only response metadata, not the full streaming chunks
     logger.info(
-      { data },
+      {
+        responseId: data.responseId,
+        modelVersion: data.modelVersion,
+        candidateCount: data.candidates?.length || 0,
+        usageMetadata: data.usageMetadata
+      },
       'Received response from Gemini API'
     );
 
@@ -300,7 +306,7 @@ export async function queryGeminiJson(
 
     logger.debug(
       { responseLength: text.length },
-      'Received JSON response from Gemini API'
+      'Received JSON response from Gemini API (parsed from streaming chunks)'
     );
 
     // Parse JSON response

@@ -157,6 +157,9 @@ async function extractPlansInfo(
         planInfo = await loadPlanDetails(modal[0], planInfo, page);
       }
 
+      logger.debug({
+        planInfo
+      }, 'Successfully scraped plan');
       plans.push(planInfo);
     } catch (error) {
       logger.warn({ error }, 'Failed to extract Vodafone plan from card');
@@ -180,9 +183,10 @@ function transformVodafonePlan(rawPlan: VodafoneRawPlan): PlanData {
   let price = 'Unknown';
   const priceDetail = rawPlan.details.find((d) => d.includes('£'));
   if (priceDetail) {
-    const priceMatch = priceDetail.match(/£[\d.]+/);
+    const priceMatch = priceDetail.match(/£\s*[\d.]+/);
     if (priceMatch) {
-      price = `${priceMatch[0]}/month`;
+      // Remove any spaces between £ and the number for clean formatting
+      price = `${priceMatch[0].replace(/\s+/g, '')}/month`;
     }
   }
 
@@ -266,7 +270,7 @@ export async function scrapeAndStoreVodafonePlans(): Promise<number> {
       logger.debug('Plans loaded, extracting data');
       const newPlans = await extractPlansInfo(page, contractLength);
 
-      logger.debug(
+      logger.info(
         { planCount: newPlans.length, contractLength },
         'Extracted plans for contract length'
       );

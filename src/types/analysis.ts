@@ -27,8 +27,8 @@ export interface CompetitivePlan {
   data: string;
   /** Roaming tier (None/EU/Global) */
   roaming: string;
-  /** Monthly price in GBP */
-  price_per_month_GBP: number;
+  /** Monthly price in GBP (null if not published) */
+  price_per_month_GBP: number | null;
   /** Extras (comma-separated) */
   extras: string;
   /** Connection speed info */
@@ -65,8 +65,8 @@ export interface O2ProductBreakdown {
   data: string;
   /** Roaming tier */
   roaming: string;
-  /** Monthly price */
-  price_per_month_GBP: number;
+  /** Monthly price (null if not published) */
+  price_per_month_GBP: number | null;
   /** Extras */
   extras: string;
   /** Connection speed */
@@ -127,4 +127,51 @@ export interface AnalysisData {
   full_competitive_dataset_all_plans: CompetitivePlan[];
   /** Plans excluded from analysis */
   products_not_considered?: ProductNotConsidered[];
+}
+
+/**
+ * Custom comparison analysis (Brand A vs Brand B)
+ * Generic structure that works for any two brands
+ *
+ * Note: This analysis focuses on Brand A's products with Brand B competitors
+ * embedded in the comparable_products array within each Brand A product.
+ * There is NO separate brand_b_products_analysis section.
+ */
+export interface CustomComparisonAnalysis {
+  /** Timestamp of analysis generation */
+  analysis_timestamp: string;
+  /** Currency used (GBP) */
+  currency: string;
+  /** High-level competitive insights (5-10 items) */
+  overall_competitive_sentiments: CompetitiveSentiment[];
+  /** Brand A products analysis with comparable Brand B products nested inside */
+  brand_a_products_analysis: BrandProductAnalysis[];
+  /** Complete dataset of all plans considered */
+  full_competitive_dataset_all_plans: CompetitivePlan[];
+  /** Plans excluded from analysis */
+  products_not_considered?: ProductNotConsidered[];
+}
+
+/**
+ * Generic brand product analysis (not O2-specific)
+ */
+export interface BrandProductAnalysis {
+  /** Product name */
+  product_name: string;
+  /** Data tier classification */
+  data_tier: string;
+  /** Roaming tier classification */
+  roaming_tier: string;
+  /** Product details and score */
+  product_breakdown: O2ProductBreakdown;
+  /** Direct competitor plans */
+  comparable_products: CompetitivePlan[];
+  /** Strategy notes for this product */
+  brand_a_product_sentiments: string[];
+  /** Suggested changes for competitiveness */
+  brand_a_product_changes: string[];
+  /** Price adjustment suggestions */
+  price_suggestions: PriceSuggestion[];
+  /** Source file */
+  source: string;
 }

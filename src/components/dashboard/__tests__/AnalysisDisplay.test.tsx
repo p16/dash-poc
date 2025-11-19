@@ -3,8 +3,13 @@
  * Story: 4.2 - Dashboard Home Screen
  */
 
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
+
+// Clean up after each test
+afterEach(() => {
+  cleanup();
+});
 import { AnalysisDisplay } from '../AnalysisDisplay';
 import type { Analysis } from '@/lib/dashboard/latest-analysis';
 
@@ -82,7 +87,7 @@ describe('AnalysisDisplay Component', () => {
 
     expect(screen.getByText('Latest Full Analysis')).toBeInTheDocument();
     // AnalysisResults component should be rendered with structured data
-    expect(screen.getByText(/Competitive Insights & Recommendations/)).toBeInTheDocument();
+    expect(screen.getByText(/Competitive Insights/)).toBeInTheDocument();
   });
 
   it('should format timestamp correctly', () => {

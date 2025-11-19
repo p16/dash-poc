@@ -16,11 +16,17 @@
     "test:coverage": "vitest run --coverage",
     "test:db": "tsx src/scripts/test-db-connection.ts",
     "test:gemini": "tsx src/scripts/test-gemini.ts",
+    "test:comparison": "tsx src/scripts/test-custom-comparison.ts",
+    "test:full-analysis": "tsx src/scripts/test-full-analysis.ts",
     "scrape": "tsx src/scripts/scrape.ts",
     "scrape:poc": "tsx src/scripts/scrape-poc.ts",
     "scrape:telcos": "tsx src/scripts/scrape-telcos.ts",
     "scrape:uswitch": "tsx src/scripts/test-uswitch.ts",
-    "migrate": "tsx src/scripts/run-migration.ts"
+    "scrape:vodafone": "tsx src/scripts/test-vodafone.ts",
+    "migrate": "tsx src/scripts/run-migration.ts",
+    "clear:plans": "tsx src/scripts/clear-plans.ts",
+    "clear:analysis": "tsx src/scripts/clear-analysis-cache.ts",
+    "clear:all": "npm run clear:plans && npm run clear:analysis"
   },
   "description": "Competitive intelligence platform for telecom pricing analysis",
   "dependencies": {

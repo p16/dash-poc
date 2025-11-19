@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { AnalysisResults } from '../AnalysisResults';
 import type { AnalysisData } from '@/types/analysis';
+
+// Clean up after each test to prevent DOM pollution
+afterEach(() => {
+  cleanup();
+});
 
 const mockAnalysisData: AnalysisData = {
   analysis_timestamp: '2025-11-18T10:00:00Z',
@@ -125,18 +130,18 @@ describe('AnalysisResults', () => {
       <AnalysisResults data={mockAnalysisData} timestamp={timestamp} brands={brands} />
     );
 
-    // High score (85) should have red color - look at the parent card div
+    // High score (85) should have green color (competitiveness is inverted - higher is better)
     const highScoreElement = screen
       .getByText('Price competitiveness needs improvement')
-      .closest('.border');
-    expect(highScoreElement).toHaveClass('border-red-200');
-    expect(highScoreElement).toHaveClass('bg-red-50');
+      .closest('.border-2');
+    expect(highScoreElement).toHaveClass('text-green-700');
+    expect(highScoreElement).toHaveClass('bg-green-50');
 
     // Medium score (45) should have yellow color
     const mediumScoreElement = screen
       .getByText('Data allowances are competitive')
-      .closest('.border');
-    expect(mediumScoreElement).toHaveClass('border-yellow-200');
+      .closest('.border-2');
+    expect(mediumScoreElement).toHaveClass('text-yellow-700');
     expect(mediumScoreElement).toHaveClass('bg-yellow-50');
   });
 
@@ -148,24 +153,23 @@ describe('AnalysisResults', () => {
       <AnalysisResults data={mockAnalysisData} timestamp={timestamp} brands={brands} />
     );
 
-    const sentimentsButton = screen.getByText(/Competitive Insights & Recommendations/);
+    // Find the collapsible O2 product section button
+    const productButton = screen.getByText('O2 10GB Plan');
 
-    // Sentiments section should be expanded by default
-    expect(screen.getByText('Price competitiveness needs improvement')).toBeInTheDocument();
+    // Product details should be collapsed by default (not in initial expandedSections)
+    expect(screen.queryByText('O2 Product Details')).not.toBeInTheDocument();
+
+    // Click to expand
+    fireEvent.click(productButton);
+
+    // Product details should now be visible
+    expect(screen.getByText('O2 Product Details')).toBeInTheDocument();
 
     // Click to collapse
-    fireEvent.click(sentimentsButton);
+    fireEvent.click(productButton);
 
-    // Sentiments should be hidden
-    expect(
-      screen.queryByText('Price competitiveness needs improvement')
-    ).not.toBeInTheDocument();
-
-    // Click to expand again
-    fireEvent.click(sentimentsButton);
-
-    // Sentiments should be visible again
-    expect(screen.getByText('Price competitiveness needs improvement')).toBeInTheDocument();
+    // Product details should be hidden again
+    expect(screen.queryByText('O2 Product Details')).not.toBeInTheDocument();
   });
 
   it('should display O2 product analysis with expandable sections', () => {
@@ -242,5 +246,41 @@ describe('AnalysisResults', () => {
     );
 
     expect(screen.queryByText('Products Not Considered')).not.toBeInTheDocument();
+  });
+
+  it('should display "Unknown" for null prices', () => {
+    const dataWithNullPrice = {
+      ...mockAnalysisData,
+      o2_products_analysis: [
+        {
+          ...mockAnalysisData.o2_products_analysis[0],
+          comparable_products: [
+            {
+              brand: 'Vodafone',
+              contract: '24-month',
+              data: '20GB',
+              roaming: 'Global',
+              price_per_month_GBP: null,
+              extras: 'Xtra: Premium features',
+              competitiveness_score: 62,
+              source: 'vodafone',
+            },
+          ],
+        },
+      ],
+    };
+
+    const timestamp = new Date('2025-11-18T10:00:00Z');
+    const brands = ['O2'];
+
+    render(<AnalysisResults data={dataWithNullPrice} timestamp={timestamp} brands={brands} />);
+
+    // Find the comparable products section
+    const button = screen.getByText('O2 10GB Plan');
+    fireEvent.click(button);
+
+    // Verify "Unknown" is displayed for null price
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.queryByText('£null')).not.toBeInTheDocument();
   });
 });

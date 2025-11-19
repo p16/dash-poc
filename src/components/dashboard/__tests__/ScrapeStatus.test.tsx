@@ -3,10 +3,15 @@
  * Story: 4.2 - Dashboard Home Screen
  */
 
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import { ScrapeStatus } from '../ScrapeStatus';
 import type { ScrapeStatus as ScrapeStatusType } from '@/lib/dashboard/scrape-status';
+
+// Clean up after each test to prevent DOM pollution
+afterEach(() => {
+  cleanup();
+});
 
 describe('ScrapeStatus Component', () => {
   it('should render fresh status with green color', () => {
@@ -92,8 +97,10 @@ describe('ScrapeStatus Component', () => {
 
     const { rerender } = render(<ScrapeStatus status={freshStatus} />);
 
-    // Fresh status should have CheckCircle icon
-    expect(screen.getByText('Data Freshness').parentElement).toContainHTML('CheckCircle');
+    // Fresh status should have icon (SVG) with green color
+    const freshIcon = screen.getByText('Data Freshness').parentElement?.parentElement?.querySelector('svg');
+    expect(freshIcon).toBeInTheDocument();
+    expect(freshIcon).toHaveClass('text-green-600');
 
     // Test stale status
     const staleStatus: ScrapeStatusType = {
@@ -104,7 +111,9 @@ describe('ScrapeStatus Component', () => {
     };
 
     rerender(<ScrapeStatus status={staleStatus} />);
-    expect(screen.getByText('Data Freshness').parentElement).toContainHTML('AlertCircle');
+    const staleIcon = screen.getByText('Data Freshness').parentElement?.parentElement?.querySelector('svg');
+    expect(staleIcon).toBeInTheDocument();
+    expect(staleIcon).toHaveClass('text-yellow-600');
   });
 
   it('should handle singular hour correctly', () => {

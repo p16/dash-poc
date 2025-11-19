@@ -6,7 +6,6 @@ import {
   ChevronUp,
   TrendingUp,
   TrendingDown,
-  AlertCircle,
   DollarSign,
   Package,
   Target,
@@ -36,18 +35,11 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
     });
   };
 
-  // Helper to get color based on score (higher score = more important to address)
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-red-700 bg-red-50 border-red-200';
-    if (score >= 40) return 'text-yellow-700 bg-yellow-50 border-yellow-200';
-    return 'text-green-700 bg-green-50 border-green-200';
-  };
-
-  // Helper for competitiveness score (higher is better)
+  // Helper for competitiveness score (higher is worse for the brand being analyzed)
   const getCompetitivenessColor = (score: number) => {
-    if (score >= 70) return 'text-green-700 bg-green-50';
+    if (score >= 70) return 'text-red-700 bg-red-50';
     if (score >= 40) return 'text-yellow-700 bg-yellow-50';
-    return 'text-red-700 bg-red-50';
+    return 'text-green-700 bg-green-50';
   };
 
   return (
@@ -56,10 +48,19 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
       <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600">
         <div className="flex items-center gap-4">
           <span>
-            <strong>Generated:</strong> {timestamp.toLocaleString()}
+            <strong>Generated:</strong>{' '}
+            {timestamp.toLocaleString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })}
           </span>
           <span>
-            <strong>Brands:</strong> {brands.join(', ')}
+            <strong>Brands:</strong> {brands?.join(', ') || 'N/A'}
           </span>
           <span>
             <strong>Currency:</strong> {data.currency}
@@ -68,44 +69,33 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
       </div>
 
       {/* Overall Competitive Sentiments */}
-      <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <button
-          onClick={() => toggleSection('sentiments')}
-          className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-slate-900">
-              Competitive Insights & Recommendations
-            </h2>
-            <span className="text-sm text-slate-500">
-              ({data.overall_competitive_sentiments.length} insights)
-            </span>
-          </div>
-          {expandedSections.has('sentiments') ? (
-            <ChevronUp className="h-5 w-5 text-slate-400" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-slate-400" />
-          )}
-        </button>
-
-        {expandedSections.has('sentiments') && (
-          <div className="p-4 pt-0 space-y-3">
+            {/* Competitive Sentiments */}
+      <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4 text-slate-900 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-green-600" />
+          Competitive Insights
+        </h2>
+        {data?.overall_competitive_sentiments && data.overall_competitive_sentiments.length > 0 ? (
+          <div className="space-y-4">
             {data.overall_competitive_sentiments.map((sentiment, idx) => (
               <div
                 key={idx}
-                className={`border rounded-lg p-4 ${getScoreColor(sentiment.score)}`}
+                className={`p-4 rounded-lg border-2 ${getCompetitivenessColor(
+                  sentiment?.score || 0
+                )}`}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold">{sentiment.sentiment}</h3>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold">{sentiment?.sentiment || 'N/A'}</h3>
                   <span className="text-sm font-medium px-2 py-1 rounded bg-white/50">
-                    Score: {sentiment.score}
+                    Score: {sentiment?.score ?? 'N/A'}
                   </span>
                 </div>
-                <p className="text-sm leading-relaxed">{sentiment.rationale}</p>
+                <p className="text-sm leading-relaxed">{sentiment?.rationale || 'N/A'}</p>
               </div>
             ))}
           </div>
+        ) : (
+          <p className="text-slate-500 italic">No competitive insights available</p>
         )}
       </div>
 
@@ -127,11 +117,14 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 <Package className="h-5 w-5 text-purple-600" />
                 <div className="text-left">
                   <h2 className="text-lg font-semibold text-slate-900">
-                    {product.product_name}
+                    {product?.product_name || 'Unknown Product'}
                   </h2>
                   <p className="text-sm text-slate-500">
-                    {product.data_tier} | {product.roaming_tier} | £
-                    {product.product_breakdown.price_per_month_GBP}/mo
+                    {product?.data_tier || 'N/A'} | {product?.roaming_tier || 'N/A'} |{' '}
+                    {product?.product_breakdown?.price_per_month_GBP !== null &&
+                    product?.product_breakdown?.price_per_month_GBP !== undefined
+                      ? `£${product.product_breakdown.price_per_month_GBP}/mo`
+                      : 'Price: Unknown'}
                   </p>
                 </div>
               </div>
@@ -269,7 +262,11 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                               <td className="px-3 py-2 font-medium">{comp.brand}</td>
                               <td className="px-3 py-2">{comp.data}</td>
                               <td className="px-3 py-2">{comp.contract}</td>
-                              <td className="px-3 py-2">£{comp.price_per_month_GBP}</td>
+                              <td className="px-3 py-2">
+                                {comp.price_per_month_GBP !== null
+                                  ? `£${comp.price_per_month_GBP}`
+                                  : 'Unknown'}
+                              </td>
                               <td className="px-3 py-2">
                                 <span
                                   className={`px-2 py-1 rounded text-xs font-medium ${getCompetitivenessColor(
@@ -293,7 +290,7 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
       })}
 
       {/* Products Not Considered (if any) */}
-      {data.products_not_considered && data.products_not_considered.length > 0 && (
+      {data?.products_not_considered && data.products_not_considered.length > 0 && (
         <div className="bg-white border border-slate-200 rounded-lg p-4">
           <h2 className="text-lg font-semibold text-slate-900 mb-3">
             Products Not Considered

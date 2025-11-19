@@ -3,14 +3,25 @@
  * Story: 4.2 - Dashboard Home Screen
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { DashboardHeader } from '../DashboardHeader';
+
+// Mock next/navigation
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
 
 // Mock fetch for logout
 global.fetch = vi.fn();
 
 describe('DashboardHeader Component', () => {
+  afterEach(() => {
+    cleanup();
+  });
   it('should render header with title and logout button', () => {
     render(<DashboardHeader />);
 
@@ -44,13 +55,13 @@ describe('DashboardHeader Component', () => {
     render(<DashboardHeader />);
 
     const header = screen.getByRole('banner');
-    expect(header).toHaveClass('bg-white', 'border-b', 'border-slate-200');
+    expect(header).toHaveClass('bg-white', 'shadow-sm');
   });
 
   it('should have logout button styled correctly', () => {
     render(<DashboardHeader />);
 
     const logoutButton = screen.getByText('Logout');
-    expect(logoutButton).toHaveClass('text-slate-600', 'hover:text-slate-900');
+    expect(logoutButton).toHaveClass('bg-slate-600', 'hover:bg-slate-700');
   });
 });

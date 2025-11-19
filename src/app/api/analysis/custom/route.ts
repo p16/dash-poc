@@ -205,11 +205,11 @@ export async function POST(request: NextRequest) {
         cached: analysisResult.cached,
         analysisId: analysisResult.analysisId,
         createdAt: analysisResult.createdAt,
-        data: analysisResult.data,
+        analysis: analysisResult.data,
+        brands: [brandA, brandB],
         metadata: {
           durationMs: duration,
           planCount: result.rows.length,
-          brands: [brandA, brandB],
         },
       },
       { status: 200 }
