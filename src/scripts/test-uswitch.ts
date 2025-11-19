@@ -10,12 +10,12 @@ import { scrapeAndStoreUswitchPlans } from '../lib/scraping/collectors/uswitch';
 dotenv.config({ path: '.env.local' });
 
 async function testUswitchCollector() {
-  console.log('🚀 Testing Uswitch GraphQL API collector...\n');
+  console.warn('🚀 Testing Uswitch GraphQL API collector...\n');
 
   try {
     const count = await scrapeAndStoreUswitchPlans();
 
-    console.log(`\n✅ Success! Inserted ${count} Uswitch deals into database`);
+    console.warn(`\n✅ Success! Inserted ${count} Uswitch deals into database`);
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Error:', error);

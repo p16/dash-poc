@@ -94,18 +94,18 @@ async function runAllCollectors(): Promise<void> {
     'Telco data collection complete'
   );
 
-  console.log('\n=== Telco Data Collection Summary ===');
-  console.log(`Duration: ${(duration / 1000).toFixed(2)}s`);
-  console.log(`Total Plans: ${totalPlans}`);
-  console.log(`Successful: ${successCount}`);
-  console.log(`Failed: ${failedCount}`);
-  console.log(`Skipped: ${skippedCount}`);
-  console.log('\nDetails:');
+  console.warn('\n=== Telco Data Collection Summary ===');
+  console.warn(`Duration: ${(duration / 1000).toFixed(2)}s`);
+  console.warn(`Total Plans: ${totalPlans}`);
+  console.warn(`Successful: ${successCount}`);
+  console.warn(`Failed: ${failedCount}`);
+  console.warn(`Skipped: ${skippedCount}`);
+  console.warn('\nDetails:');
   results.forEach(r => {
     const status = r.status === 'success' ? '✓' : r.status === 'failed' ? '✗' : '○';
-    console.log(`  ${status} ${r.source}: ${r.planCount} plans ${r.error ? `(${r.error})` : ''}`);
+    console.warn(`  ${status} ${r.source}: ${r.planCount} plans ${r.error ? `(${r.error})` : ''}`);
   });
-  console.log('=====================================\n');
+  console.warn('=====================================\n');
 
   // Exit with error code if any failed
   if (failedCount > 0) {

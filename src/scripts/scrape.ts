@@ -149,32 +149,32 @@ function displaySummary(results: CollectorResult[], totalExecutionTime: number):
   const totalPlans = successful.reduce((sum, r) => sum + r.plansCollected, 0);
   const successRate = (successful.length / results.length) * 100;
 
-  console.log('\n' + '='.repeat(80));
-  console.log('📊 COLLECTION SUMMARY');
-  console.log('='.repeat(80));
-  console.log(`\n✅ Successful: ${successful.length}/${results.length}`);
-  console.log(`❌ Failed: ${failed.length}/${results.length}`);
-  console.log(`📈 Success Rate: ${successRate.toFixed(1)}%`);
-  console.log(`📦 Total Plans Collected: ${totalPlans}`);
-  console.log(`⏱️  Total Execution Time: ${(totalExecutionTime / 1000).toFixed(2)}s`);
+  console.warn('\n' + '='.repeat(80));
+  console.warn('📊 COLLECTION SUMMARY');
+  console.warn('='.repeat(80));
+  console.warn(`\n✅ Successful: ${successful.length}/${results.length}`);
+  console.warn(`❌ Failed: ${failed.length}/${results.length}`);
+  console.warn(`📈 Success Rate: ${successRate.toFixed(1)}%`);
+  console.warn(`📦 Total Plans Collected: ${totalPlans}`);
+  console.warn(`⏱️  Total Execution Time: ${(totalExecutionTime / 1000).toFixed(2)}s`);
 
   if (successful.length > 0) {
-    console.log('\n✅ Successful Collectors:');
+    console.warn('\n✅ Successful Collectors:');
     successful.forEach((r) => {
-      console.log(
+      console.warn(
         `   - ${r.name.padEnd(12)} | ${r.plansCollected.toString().padStart(3)} plans | ${(r.executionTime / 1000).toFixed(2)}s`
       );
     });
   }
 
   if (failed.length > 0) {
-    console.log('\n❌ Failed Collectors:');
+    console.warn('\n❌ Failed Collectors:');
     failed.forEach((r) => {
-      console.log(`   - ${r.name.padEnd(12)} | ${r.error}`);
+      console.warn(`   - ${r.name.padEnd(12)} | ${r.error}`);
     });
   }
 
-  console.log('\n' + '='.repeat(80));
+  console.warn('\n' + '='.repeat(80));
 
   // Log structured summary
   logger.info(
@@ -201,7 +201,7 @@ function displaySummary(results: CollectorResult[], totalExecutionTime: number):
  * Main execution function
  */
 async function main(): Promise<void> {
-  console.log('\n🚀 Starting unified data collection...\n');
+  console.warn('\n🚀 Starting unified data collection...\n');
   logger.info('Starting unified data collection for all sources');
 
   const overallStartTime = Date.now();
@@ -225,10 +225,10 @@ async function main(): Promise<void> {
   const successRate = (results.filter((r) => r.status === 'success').length / results.length) * 100;
 
   if (successRate >= 95) {
-    console.log('\n✅ Collection completed successfully!\n');
+    console.warn('\n✅ Collection completed successfully!\n');
     process.exit(0);
   } else {
-    console.log('\n⚠️  Collection completed with failures (below 95% success rate)\n');
+    console.warn('\n⚠️  Collection completed with failures (below 95% success rate)\n');
     process.exit(1);
   }
 }

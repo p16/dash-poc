@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       logger.warn('Invalid JSON in request body');
       return NextResponse.json(
         {
@@ -160,6 +160,22 @@ export async function POST(request: NextRequest) {
     logger.info(
       { planCount: result.rows.length, foundBrands },
       'Fetched plan data for custom comparison'
+    );
+
+    // Count plans per brand
+    const planCountByBrand = result.rows.reduce((acc, plan) => {
+      acc[plan.source] = (acc[plan.source] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    logger.info(
+      {
+        brandA,
+        brandB,
+        planCountByBrand,
+        totalPlans: result.rows.length,
+      },
+      'Plan distribution for custom comparison'
     );
 
     // Step 3: Call analysis engine with custom comparison type

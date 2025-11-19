@@ -19,13 +19,13 @@ interface PlanSample {
 }
 
 async function analyzeSampleData() {
-  console.log('\n📊 Data Format Analysis for Story 2.5\n');
-  console.log('='.repeat(80));
+  console.warn('\n📊 Data Format Analysis for Story 2.5\n');
+  console.warn('='.repeat(80));
 
   const sources = ['O2', 'Vodafone', 'Sky', 'Tesco', 'Three', 'Giffgaff', 'Smarty', 'Uswitch'];
 
   for (const source of sources) {
-    console.log(`\n🔍 Analyzing ${source} data formats...\n`);
+    console.warn(`\n🔍 Analyzing ${source} data formats...\n`);
 
     try {
       const result = await pool.query<PlanSample>(
@@ -34,33 +34,33 @@ async function analyzeSampleData() {
       );
 
       if (result.rows.length === 0) {
-        console.log(`   ⚠️  No plans found for ${source}`);
+        console.warn(`   ⚠️  No plans found for ${source}`);
         continue;
       }
 
       result.rows.forEach((row: PlanSample, index: number) => {
-        console.log(`   Sample ${index + 1}:`);
-        console.log(`   plan_key: ${row.plan_key || 'NULL'}`);
+        console.warn(`   Sample ${index + 1}:`);
+        console.warn(`   plan_key: ${row.plan_key || 'NULL'}`);
 
         const data = row.plan_data;
 
         // Analyze data allowance format
         const dataField = data.data || data.dataAllowance || data.allowance || data.data_allowance;
-        console.log(`   Data Allowance: ${JSON.stringify(dataField)}`);
+        console.warn(`   Data Allowance: ${JSON.stringify(dataField)}`);
 
         // Analyze pricing format
         const priceField = data.price || data.monthlyPrice || data.cost || data.monthly_price;
-        console.log(`   Price: ${JSON.stringify(priceField)}`);
+        console.warn(`   Price: ${JSON.stringify(priceField)}`);
 
         // Analyze contract term format
         const contractField = data.contract || data.contractLength || data.term || data.contract_length;
-        console.log(`   Contract: ${JSON.stringify(contractField)}`);
+        console.warn(`   Contract: ${JSON.stringify(contractField)}`);
 
         // Show full data structure for first sample
         if (index === 0) {
-          console.log(`   Full structure: ${JSON.stringify(data, null, 2)}`);
+          console.warn(`   Full structure: ${JSON.stringify(data, null, 2)}`);
         }
-        console.log('');
+        console.warn('');
       });
 
     } catch (error) {
@@ -68,8 +68,8 @@ async function analyzeSampleData() {
     }
   }
 
-  console.log('='.repeat(80));
-  console.log('\n✅ Analysis complete\n');
+  console.warn('='.repeat(80));
+  console.warn('\n✅ Analysis complete\n');
 
   await pool.end();
 }

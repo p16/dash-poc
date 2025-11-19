@@ -2,19 +2,24 @@ import pino from 'pino';
 
 /**
  * Logger instance for the application
- * Configured with pretty printing in development, JSON in production
+ *
+ * In development, uses pino-pretty in browser mode (no worker threads)
+ * In production, outputs JSON for structured logging
  */
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  ...(process.env.NODE_ENV === 'development' && {
-    transport: {
-      target: 'pino-pretty',
-      options: {
-        colorize: true,
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname',
-      },
-    },
-  }),
+  browser: {
+    asObject: false,
+  },
+  ...(process.env.NODE_ENV === 'production'
+    ? {}
+    : {
+        // Development: simple stdout logging without worker threads
+        formatters: {
+          level: (label) => {
+            return { level: label.toUpperCase() };
+          },
+        },
+      }),
 });
 

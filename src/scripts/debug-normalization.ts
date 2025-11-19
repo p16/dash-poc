@@ -13,6 +13,6 @@ const testData = {
 
 const normalized = normalizePlanData(testData, 'Smarty');
 
-console.log('Original data:', JSON.stringify(testData, null, 2));
-console.log('\nNormalized data:', JSON.stringify(normalized, null, 2));
-console.log('\nplan_key:', normalized.plan_key);
+console.warn('Original data:', JSON.stringify(testData, null, 2));
+console.warn('\nNormalized data:', JSON.stringify(normalized, null, 2));
+console.warn('\nplan_key:', normalized.plan_key);

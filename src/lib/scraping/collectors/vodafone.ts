@@ -6,7 +6,7 @@
  * Story: 2.2 - Data Collectors for Telco Sources
  */
 
-import { chromium, Browser } from 'playwright';
+import { chromium } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
 import { normalizePlans } from '../normalize';

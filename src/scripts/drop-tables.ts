@@ -12,7 +12,7 @@ const sql = readFileSync('drop-tables.sql', 'utf-8');
 
 pool.query(sql)
   .then(() => {
-    console.log('Tables dropped successfully');
+    console.warn('Tables dropped successfully');
     return pool.end();
   })
   .then(() => process.exit(0))

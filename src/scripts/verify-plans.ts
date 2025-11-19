@@ -23,8 +23,8 @@ async function verifyPlans() {
       ORDER BY source
     `);
 
-    console.log('\n=== Plans by Source ===');
-    console.table(sourceCount.rows);
+    console.warn('\n=== Plans by Source ===');
+    console.warn(sourceCount.rows);
 
     // Check plan_key values
     const keyCheck = await pool.query(`
@@ -35,8 +35,8 @@ async function verifyPlans() {
       FROM plans
     `);
 
-    console.log('\n=== Plan Key Status ===');
-    console.table(keyCheck.rows);
+    console.warn('\n=== Plan Key Status ===');
+    console.warn(keyCheck.rows);
 
     // Sample plan data
     const sample = await pool.query(`
@@ -46,14 +46,14 @@ async function verifyPlans() {
       LIMIT 3
     `);
 
-    console.log('\n=== Sample Plans (3 most recent) ===');
+    console.warn('\n=== Sample Plans (3 most recent) ===');
     sample.rows.forEach((row, idx) => {
-      console.log(`\nPlan ${idx + 1}:`);
-      console.log(`  ID: ${row.id}`);
-      console.log(`  Source: ${row.source}`);
-      console.log(`  Plan Key: ${row.plan_key || 'NULL (not normalized)'}`);
-      console.log(`  Data: ${JSON.stringify(row.plan_data, null, 2)}`);
-      console.log(`  Scraped: ${row.scrape_timestamp}`);
+      console.warn(`\nPlan ${idx + 1}:`);
+      console.warn(`  ID: ${row.id}`);
+      console.warn(`  Source: ${row.source}`);
+      console.warn(`  Plan Key: ${row.plan_key || 'NULL (not normalized)'}`);
+      console.warn(`  Data: ${JSON.stringify(row.plan_data, null, 2)}`);
+      console.warn(`  Scraped: ${row.scrape_timestamp}`);
     });
 
   } catch (error) {

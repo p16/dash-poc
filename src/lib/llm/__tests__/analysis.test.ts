@@ -3,6 +3,8 @@
  *
  * Tests the analysis engine with mocked Gemini API and database.
  * Does NOT make real API calls or database queries - uses mocks for fast, reliable testing.
+ *
+ * @vitest-environment node
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';

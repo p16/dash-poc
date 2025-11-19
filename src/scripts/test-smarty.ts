@@ -10,12 +10,12 @@ import { scrapeAndStoreSmartyPlans } from '../lib/scraping/collectors/smarty';
 dotenv.config({ path: '.env.local' });
 
 async function testSmartyCollector() {
-  console.log('🚀 Testing Smarty API collector...\n');
+  console.warn('🚀 Testing Smarty API collector...\n');
 
   try {
     const count = await scrapeAndStoreSmartyPlans();
 
-    console.log(`\n✅ Success! Inserted ${count} Smarty plans into database`);
+    console.warn(`\n✅ Success! Inserted ${count} Smarty plans into database`);
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Error:', error);

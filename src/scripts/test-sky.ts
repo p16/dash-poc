@@ -10,12 +10,12 @@ import { scrapeAndStoreSkyPlans } from '../lib/scraping/collectors/sky';
 dotenv.config({ path: '.env.local' });
 
 async function testSkyCollector() {
-  console.log('🚀 Testing Sky Mobile Playwright collector...\n');
+  console.warn('🚀 Testing Sky Mobile Playwright collector...\n');
 
   try {
     const count = await scrapeAndStoreSkyPlans();
 
-    console.log(`\n✅ Success! Inserted ${count} Sky Mobile plans into database`);
+    console.warn(`\n✅ Success! Inserted ${count} Sky Mobile plans into database`);
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Error:', error);

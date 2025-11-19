@@ -35,7 +35,7 @@ import type { PlanDataForAnalysis } from '@/lib/llm/analysis';
  * - 500: Analysis generation failed
  * - 503: Service temporarily unavailable (API rate limit, etc.)
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   const startTime = Date.now();
 
   try {
@@ -75,10 +75,22 @@ export async function POST(request: NextRequest) {
       'Fetched plan data for full analysis'
     );
 
-    // Step 2: Extract unique brand list
+    // Step 2: Extract unique brand list and count plans per brand
     const brands = [...new Set(result.rows.map((plan) => plan.source))].sort();
+    const planCountByBrand = result.rows.reduce((acc, plan) => {
+      acc[plan.source] = (acc[plan.source] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-    logger.info({ brands, brandCount: brands.length }, 'Identified brands for analysis');
+    logger.info(
+      {
+        brands,
+        brandCount: brands.length,
+        planCountByBrand,
+        totalPlans: result.rows.length,
+      },
+      'Identified brands for analysis'
+    );
 
     // Step 3: Call analysis engine
     const analysisResult = await generateAnalysis({

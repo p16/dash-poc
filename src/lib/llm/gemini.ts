@@ -7,26 +7,63 @@
  * Story: 3.1 - Google Gemini API Integration
  */
 
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { logger } from '../utils/logger';
 
 /**
- * Rate limiting configuration
- *
- * Gemini API Free Tier Limits (as of 2024):
- * - 15 requests per minute (RPM)
- * - 1,500 requests per day (RPD)
- * - 1 million tokens per minute (TPM)
+ * Gemini API configuration
  */
-const RATE_LIMIT = {
-  requestsPerMinute: 15,
-  minDelayBetweenRequests: 4000, // 4 seconds between requests (conservative)
-};
+const GEMINI_API_URL =
+  process.env.GEMINI_API_URL ||
+  'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-pro:streamGenerateContent';
 
 /**
- * Track API call timestamps for rate limiting
+ * Gemini API request/response types
  */
-let lastRequestTime = 0;
+export interface GeminiPart {
+  text?: string;
+  inlineData?: {
+    mimeType: string;
+    data: string;
+  };
+}
+
+export interface GeminiRequest {
+  contents: Array<{
+    role: string;
+    parts: Array<GeminiPart>;
+  }>;
+  generationConfig?: {
+    temperature?: number;
+    topK?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+  };
+}
+
+export interface GeminiResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+      role?: string;
+    };
+    finishReason?: string;
+    index?: number;
+    safetyRatings?: Array<{
+      category: string;
+      probability: string;
+    }>;
+  }>;
+  promptFeedback?: {
+    safetyRatings?: Array<{
+      category: string;
+      probability: string;
+    }>;
+  };
+  [key: string]: unknown;
+}
 
 /**
  * Validate Gemini API key from environment
@@ -53,93 +90,166 @@ export function validateApiKey(): string {
 }
 
 /**
- * Initialize Google Generative AI client
+ * Call Gemini API via HTTP fetch
  *
- * @returns {GoogleGenerativeAI} Initialized client
- * @throws {Error} If API key validation fails
+ * @param prompt - The prompt text to send
+ * @param config - Optional generation configuration
+ * @returns {Promise<GeminiResponse>} API response
+ * @throws {Error} If API call fails
  */
-export function initializeGeminiClient(): GoogleGenerativeAI {
+export async function callGeminiAPI(
+  prompt: string,
+  config?: {
+    temperature?: number;
+    topK?: number;
+    topP?: number;
+    maxOutputTokens?: number;
+    responseMimeType?: string;
+  }
+): Promise<GeminiResponse> {
   const apiKey = validateApiKey();
-  const client = new GoogleGenerativeAI(apiKey);
-  logger.info('Gemini API client initialized');
-  return client;
-}
 
-/**
- * Get Gemini model instance
- *
- * @param modelName - Model name (default: 'gemini-2.5-pro')
- * @returns {GenerativeModel} Model instance
- */
-export function getGeminiModel(
-  modelName: string = 'gemini-2.5-pro'
-): GenerativeModel {
-  const client = initializeGeminiClient();
-  const model = client.getGenerativeModel({ model: modelName });
-  logger.debug({ modelName }, 'Gemini model instance created');
-  return model;
-}
+  const requestBody: GeminiRequest = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }],
+      },
+    ],
+  };
 
-/**
- * Apply rate limiting delay if needed
- *
- * Ensures requests don't exceed free tier limits by enforcing
- * minimum delay between requests.
- *
- * @returns {Promise<void>}
- */
-async function applyRateLimit(): Promise<void> {
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-
-  if (timeSinceLastRequest < RATE_LIMIT.minDelayBetweenRequests) {
-    const delayNeeded = RATE_LIMIT.minDelayBetweenRequests - timeSinceLastRequest;
-    logger.debug(
-      { delayMs: delayNeeded, timeSinceLastRequest },
-      'Rate limiting: delaying request'
-    );
-    await new Promise((resolve) => setTimeout(resolve, delayNeeded));
+  if (config) {
+    requestBody.generationConfig = config;
   }
 
-  lastRequestTime = Date.now();
+  try {
+    logger.info(
+      { promptLength: prompt.length, hasConfig: !!config },
+      'Calling Gemini API via fetch'
+    );
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      logger.error(
+        { status: response.status, statusText: response.statusText, errorText },
+        'Gemini API HTTP error'
+      );
+      throw new Error(
+        `Gemini API request failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data: GeminiResponse = await response.json();
+
+    logger.info(
+      { data },
+      'Received response from Gemini API'
+    );
+
+    return data;
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error({ error: error.message }, 'Failed to call Gemini API');
+      throw new Error(`Failed to call Gemini API: ${error.message}`);
+    }
+    throw new Error('Unknown error occurred while calling Gemini API');
+  }
+}
+
+/**
+ * Extract text from Gemini API response
+ *
+ * Handles both single and streaming responses (array of chunks).
+ * Gemini streaming returns an array of response objects, each with candidates.
+ *
+ * @param response - Gemini API response (single object or array of chunks)
+ * @returns {string} Extracted and concatenated text
+ * @throws {Error} If response is invalid
+ */
+export function extractTextFromResponse(response: GeminiResponse | GeminiResponse[]): string {
+  // Handle streaming response (array of chunks)
+  if (Array.isArray(response)) {
+    logger.debug({ chunkCount: response.length }, 'Processing streaming response');
+
+    const textChunks: string[] = [];
+
+    for (const chunk of response) {
+      if (!chunk.candidates || chunk.candidates.length === 0) {
+        continue; // Skip empty chunks
+      }
+
+      const candidate = chunk.candidates[0];
+      if (!candidate.content?.parts?.[0]?.text) {
+        continue; // Skip chunks without text
+      }
+
+      textChunks.push(candidate.content.parts[0].text);
+    }
+
+    if (textChunks.length === 0) {
+      throw new Error('No text content in streaming response');
+    }
+
+    const fullText = textChunks.join('');
+    logger.debug({ chunkCount: textChunks.length, totalLength: fullText.length }, 'Concatenated streaming chunks');
+
+    return fullText;
+  }
+
+  // Handle single response object
+  if (!response.candidates || response.candidates.length === 0) {
+    throw new Error('No candidates in Gemini API response');
+  }
+
+  const firstCandidate = response.candidates[0];
+  if (!firstCandidate.content || !firstCandidate.content.parts || firstCandidate.content.parts.length === 0) {
+    throw new Error('No content in Gemini API response');
+  }
+
+  const text = firstCandidate.content.parts[0].text;
+  if (!text) {
+    throw new Error('No text in Gemini API response');
+  }
+
+  return text;
 }
 
 /**
  * Query Gemini API with a prompt
  *
  * @param prompt - The prompt text to send to Gemini
- * @param modelName - Model to use (default: 'gemini-2.5-pro')
  * @returns {Promise<string>} Generated response text
  * @throws {Error} If API call fails
  */
 export async function queryGemini(
-  prompt: string,
-  modelName: string = 'gemini-2.5-pro'
+  prompt: string
 ): Promise<string> {
   try {
-    // Apply rate limiting
-    await applyRateLimit();
-
-    const model = getGeminiModel(modelName);
-
     logger.info(
-      { promptLength: prompt.length, modelName },
+      { promptLength: prompt.length },
       'Sending query to Gemini API'
     );
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    const response = await callGeminiAPI(prompt);
+    const text = extractTextFromResponse(response);
 
     logger.info(
-      { responseLength: text.length, modelName },
+      { responseLength: text.length },
       'Received response from Gemini API'
     );
 
     return text;
   } catch (error) {
     logger.error(
-      { error, promptLength: prompt.length, modelName },
+      { error, promptLength: prompt.length },
       'Gemini API query failed'
     );
 
@@ -147,7 +257,7 @@ export async function queryGemini(
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
 
-      if (errorMessage.includes('api key')) {
+      if (errorMessage.includes('api key') || errorMessage.includes('unauthorized') || errorMessage.includes('credentials')) {
         throw new Error('Invalid Gemini API key. Please check your GEMINI_API_KEY environment variable.');
       }
       if (errorMessage.includes('quota')) {
@@ -170,35 +280,23 @@ export async function queryGemini(
  * Automatically parses and validates JSON response.
  *
  * @param prompt - The prompt text to send to Gemini
- * @param modelName - Model to use (default: 'gemini-2.5-pro')
  * @returns {Promise<any>} Parsed JSON response
  * @throws {Error} If API call fails or JSON parsing fails
  */
 export async function queryGeminiJson(
-  prompt: string,
-  modelName: string = 'gemini-2.5-pro'
+  prompt: string
 ): Promise<any> {
   try {
-    // Apply rate limiting
-    await applyRateLimit();
-
-    const model = getGeminiModel(modelName);
-
     logger.info(
-      { promptLength: prompt.length, modelName, mode: 'JSON' },
+      { promptLength: prompt.length, mode: 'JSON' },
       'Sending JSON query to Gemini API'
     );
 
-    // Configure for JSON response
-    const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
+    const response = await callGeminiAPI(prompt, {
+      responseMimeType: 'application/json',
     });
 
-    const response = result.response;
-    const text = response.text();
+    const text = extractTextFromResponse(response);
 
     logger.debug(
       { responseLength: text.length },
@@ -209,14 +307,14 @@ export async function queryGeminiJson(
     const jsonData = JSON.parse(text);
 
     logger.info(
-      { modelName, responseKeys: Object.keys(jsonData).length },
+      { responseKeys: Object.keys(jsonData).length },
       'Successfully parsed JSON response'
     );
 
     return jsonData;
   } catch (error) {
     logger.error(
-      { error, promptLength: prompt.length, modelName },
+      { error, promptLength: prompt.length },
       'Gemini JSON API query failed'
     );
 
@@ -228,7 +326,7 @@ export async function queryGeminiJson(
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
 
-      if (errorMessage.includes('api key')) {
+      if (errorMessage.includes('api key') || errorMessage.includes('unauthorized') || errorMessage.includes('credentials')) {
         throw new Error('Invalid Gemini API key. Please check your GEMINI_API_KEY environment variable.');
       }
       if (errorMessage.includes('quota')) {
@@ -256,7 +354,7 @@ export function parseResponse(responseText: string): any {
     const jsonData = JSON.parse(responseText);
     logger.debug('Response parsed as JSON');
     return jsonData;
-  } catch (error) {
+  } catch {
     // Not JSON, return as plain text
     logger.debug('Response is plain text, not JSON');
     return responseText;
