@@ -1,7 +1,7 @@
-import { chromium } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
 import { normalizePlans } from '../normalize';
+import { launchBrowser } from '../browser';
 import type { PlanData } from '../../../types/database';
 
 /**
@@ -241,7 +241,7 @@ function transformThreePlan(rawPlan: ThreePlanRaw): PlanData {
 export async function scrapeAndStoreThreePlans(): Promise<number> {
   logger.info('Starting Three plan collection');
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser();
 
   try {
     const page = await browser.newPage();

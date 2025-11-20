@@ -1,7 +1,8 @@
-import { chromium, Browser, Page } from 'playwright';
+import { Browser, Page } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
 import { normalizePlans } from '../normalize';
+import { launchBrowser, DEFAULT_CONTEXT_OPTIONS } from '../browser';
 import type { PlanData } from '../../../types/database';
 
 /**
@@ -39,22 +40,9 @@ export async function scrapeO2(): Promise<O2Plan[]> {
   const allPlans: O2Plan[] = [];
 
   try {
-    browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-blink-features=AutomationControlled',
-        '--disable-dev-shm-usage',
-      ],
-    });
+    browser = await launchBrowser();
 
-    const context = await browser.newContext({
-      viewport: { width: 1920, height: 1080 },
-      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      locale: 'en-GB',
-      timezoneId: 'Europe/London',
-    });
+    const context = await browser.newContext(DEFAULT_CONTEXT_OPTIONS);
 
     // Add cookie before loading pages
     await context.addCookies([{

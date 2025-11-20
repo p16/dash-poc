@@ -6,10 +6,10 @@
  * Story: 2.2 - Data Collectors for Telco Sources
  */
 
-import { chromium } from 'playwright';
 import { insertPlans } from '../../db/plans';
 import { normalizePlans } from '../normalize';
 import { logger } from '../../utils/logger';
+import { launchBrowser } from '../browser';
 import type { PlanData } from '../../../types/database';
 import type { Page } from 'playwright';
 
@@ -121,7 +121,7 @@ function transformTescoPlan(rawPlan: TescoRawPlan): PlanData {
 export async function scrapeAndStoreTescoPlans(): Promise<number> {
   logger.info('Starting Tesco Mobile plan collection');
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser();
   const page = await browser.newPage();
 
   try {

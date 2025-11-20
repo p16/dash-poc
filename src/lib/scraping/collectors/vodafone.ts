@@ -6,10 +6,10 @@
  * Story: 2.2 - Data Collectors for Telco Sources
  */
 
-import { chromium } from 'playwright';
 import { logger } from '../../utils/logger';
 import { insertPlans } from '../../db/plans';
 import { normalizePlans } from '../normalize';
+import { launchBrowser } from '../browser';
 import type { PlanData } from '../../../types/database';
 import type { Page, Locator } from 'playwright';
 
@@ -222,7 +222,7 @@ function transformVodafonePlan(rawPlan: VodafoneRawPlan): PlanData {
 export async function scrapeAndStoreVodafonePlans(): Promise<number> {
   logger.info('Starting Vodafone plan collection');
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser();
   const page = await browser.newPage();
 
   try {

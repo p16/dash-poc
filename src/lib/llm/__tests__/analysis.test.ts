@@ -113,7 +113,7 @@ describe('Analysis Generation & Caching Engine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations  
+    // Default mock implementations
     mockValidateAnalysisResponse.mockReturnValue(sampleAnalysisResult);
     mockValidateCustomComparisonResponse.mockReturnValue(sampleAnalysisResult);
   });
