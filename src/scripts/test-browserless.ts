@@ -26,30 +26,30 @@ const endpoints = [
 async function testEndpoint(endpoint: string): Promise<boolean> {
   const wsUrl = `${endpoint}?token=${token}`;
 
-  console.log(`\nTesting: ${endpoint}`);
+  console.warn(`\nTesting: ${endpoint}`);
 
   try {
     const browser = await chromium.connect(wsUrl, {
       timeout: 10000,
     });
 
-    console.log(`✅ SUCCESS: ${endpoint} works!`);
+    console.warn(`✅ SUCCESS: ${endpoint} works!`);
     await browser.close();
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
-    console.log(`❌ FAILED: ${message}`);
+    console.warn(`❌ FAILED: ${message}`);
     return false;
   }
 }
 
 async function main() {
-  console.log('Testing Browserless endpoints...\n');
+  console.warn('Testing Browserless endpoints...\n');
 
   for (const endpoint of endpoints) {
     const success = await testEndpoint(endpoint);
     if (success) {
-      console.log(`\n🎉 Use this endpoint in your code: ${endpoint}`);
+      console.warn(`\n🎉 Use this endpoint in your code: ${endpoint}`);
       break;
     }
   }

@@ -44,6 +44,11 @@ const mockAnalysisResponse = {
 describe('CustomComparison', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock the analysis list endpoint that's called on component mount
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
   });
 
   afterEach(() => {
@@ -125,7 +130,13 @@ describe('CustomComparison', () => {
   });
 
   it('calls API with correct parameters when compare button clicked', async () => {
-    // Mock error response to avoid rendering AnalysisResults with incomplete data
+    // First mock for the analysis list endpoint on mount
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock error response to avoid rendering AnalysisResults with incomplete data
     (global.fetch as any).mockResolvedValueOnce({
       ok: false,
       status: 404,
@@ -153,6 +164,13 @@ describe('CustomComparison', () => {
   });
 
   it('shows loading state during analysis', async () => {
+    // First mock for the analysis list endpoint
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock for the comparison with delay
     (global.fetch as any).mockImplementationOnce(
       () =>
         new Promise((resolve) =>
@@ -182,6 +200,13 @@ describe('CustomComparison', () => {
   });
 
   it('disables form inputs during loading', async () => {
+    // First mock for the analysis list endpoint
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock for the comparison with delay
     (global.fetch as any).mockImplementationOnce(
       () =>
         new Promise((resolve) =>
@@ -215,6 +240,13 @@ describe('CustomComparison', () => {
   // These tests focus on the CustomComparison component's integration
 
   it('displays error message on API failure', async () => {
+    // First mock clears the beforeEach mock for the list endpoint
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock is for the custom comparison endpoint
     (global.fetch as any).mockResolvedValueOnce({
       ok: false,
       status: 404,
@@ -238,6 +270,13 @@ describe('CustomComparison', () => {
   });
 
   it('shows generic error message when API returns non-JSON error', async () => {
+    // First mock for the analysis list endpoint
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock for the custom comparison endpoint
     (global.fetch as any).mockResolvedValueOnce({
       ok: false,
       status: 500,
@@ -260,6 +299,13 @@ describe('CustomComparison', () => {
   });
 
   it('handles network errors gracefully', async () => {
+    // First mock for the analysis list endpoint
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock rejects for the custom comparison endpoint
     (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
     render(<CustomComparison brands={mockBrands} />);
@@ -278,6 +324,13 @@ describe('CustomComparison', () => {
   });
 
   it('allows retry after error', async () => {
+    // First mock for the analysis list endpoint on mount
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ analyses: [] }),
+    });
+
+    // Second mock for the custom comparison endpoint that fails
     (global.fetch as any).mockResolvedValueOnce({
       ok: false,
       status: 500,

@@ -11,11 +11,26 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowRight, Loader2, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { CustomComparisonResults } from '@/components/analysis/CustomComparisonResults';
 import Link from 'next/link';
 import type { CustomComparisonAnalysis } from '@/types/analysis';
+
+interface Analysis {
+  id: string;
+  comparisonType: 'full' | 'custom';
+  brands: string[];
+  createdAt: string;
+  analysisResult: {
+    overall_competitive_sentiments?: Array<{
+      score: number;
+      sentiment: string;
+      rationale: string;
+    }>;
+    [key: string]: any;
+  };
+}
 
 type Props = {
   brands: string[];
@@ -31,8 +46,63 @@ export function CustomComparison({ brands }: Props) {
   const [brandA, setBrandA] = useState('');
   const [brandB, setBrandB] = useState('');
   const [state, setState] = useState<ComparisonState>({ status: 'idle' });
+  const [analyses, setAnalyses] = useState<Analysis[]>([]);
+
+  useEffect(() => {
+    loadAnalyses();
+  }, []);
+
+  const loadAnalyses = async () => {
+    try {
+      const response = await fetch('/api/analysis?limit=10');
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyses(data.analyses || []);
+      }
+    } catch (error) {
+      console.error('Error loading analyses:', error);
+    }
+  };
 
   const isFormValid = brandA && brandB && brandA !== brandB;
+
+  const loadSpecificAnalysis = async (analysisId: string, brands: string[]) => {
+    setState({ status: 'loading' });
+
+    try {
+      // Fetch the specific analysis by ID
+      const response = await fetch(`/api/analysis/${analysisId}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to load analysis');
+      }
+
+      const data = await response.json();
+
+      // Set the brands in the form
+      if (brands.length >= 2) {
+        setBrandA(brands[0]);
+        setBrandB(brands[1]);
+      }
+
+      // Display the analysis
+      setState({
+        status: 'success',
+        data: data.analysisResult,
+        brands: brands,
+        cached: true,
+        timestamp: new Date(data.createdAt),
+      });
+
+      // Scroll to results
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      setState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Failed to load analysis',
+      });
+    }
+  };
 
   const handleCompare = async () => {
     if (!isFormValid) return;
@@ -89,6 +159,9 @@ export function CustomComparison({ brands }: Props) {
         cached: result.cached || false,
         timestamp: new Date(),
       });
+
+      // Reload analyses to show the new one
+      await loadAnalyses();
     } catch (error) {
       setState({
         status: 'error',
@@ -187,6 +260,72 @@ export function CustomComparison({ brands }: Props) {
           </p>
         )}
       </div>
+
+      {/* Recent Analyses */}
+      {analyses.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">📊 Recent Analyses</h2>
+            <Link
+              href="/monitor"
+              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+            >
+              View all in Monitor
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="space-y-4">
+            {analyses.slice(0, 5).map((analysis) => (
+              <div key={analysis.id} className="border border-gray-200 rounded-md p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-gray-900">
+                        {analysis.comparisonType === 'full' ? '📈 Full Analysis' : '⚖️ Custom Comparison'}
+                      </span>
+                      <button
+                        onClick={() => loadSpecificAnalysis(analysis.id, analysis.brands)}
+                        className="text-xs text-blue-600 hover:text-blue-700 underline"
+                      >
+                        View analysis
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {analysis.brands.join(' vs ')}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                    {new Date(analysis.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                {analysis.analysisResult.overall_competitive_sentiments && (
+                  <div className="mt-3 text-sm">
+                    <p className="font-medium text-gray-700 mb-2">Top Insights:</p>
+                    <ul className="space-y-1">
+                      {analysis.analysisResult.overall_competitive_sentiments.slice(0, 2).map((insight, idx) => (
+                        <li key={idx} className="bg-gray-50 p-2 rounded text-gray-700 text-xs">
+                          <span className="font-medium">Score {insight.score}:</span> {insight.sentiment}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {analyses.length > 5 && (
+            <div className="mt-4 text-center">
+              <Link
+                href="/monitor"
+                className="text-sm text-blue-600 hover:text-blue-700 flex items-center justify-center gap-1"
+              >
+                View all {analyses.length} analyses in Monitor
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Job Started Message */}
       {state.status === 'loading' && state.jobId && (
