@@ -9,7 +9,7 @@
  */
 
 import { config } from 'dotenv';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import pg from 'pg';
 import { logger } from '../lib/utils/logger';
@@ -59,8 +59,18 @@ async function main(): Promise<void> {
   }
 
   try {
-    // Run initial schema migration
-    await runMigration('001_initial_schema.sql');
+    // Get all migration files sorted by name
+    const migrationsDir = resolve(process.cwd(), 'migrations');
+    const migrationFiles = readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort(); // Sort to ensure migrations run in order (001, 002, etc.)
+
+    logger.info({ count: migrationFiles.length, files: migrationFiles }, 'Found migration files');
+
+    // Run all migrations in order
+    for (const migrationFile of migrationFiles) {
+      await runMigration(migrationFile);
+    }
 
     logger.info('All migrations completed successfully');
     process.exit(0);

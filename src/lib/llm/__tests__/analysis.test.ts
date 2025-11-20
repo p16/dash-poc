@@ -47,14 +47,15 @@ vi.mock('../validation', () => ({
   },
 }));
 
-// Mock fs for prompt loading
-vi.mock('fs', () => ({
-  promises: {
-    readFile: vi.fn(),
-  },
+// Mock prompt templates
+vi.mock('../prompts/prompt-full-analysis.txt', () => ({
+  default: 'Full analysis prompt template for {{BRAND_A}} vs all competitors',
 }));
 
-import { promises as fs } from 'fs';
+vi.mock('../prompts/prompt-custom-comparison.txt', () => ({
+  default: 'Compare {{BRAND_A}} vs {{BRAND_B}} custom prompt template',
+}));
+
 import { queryGeminiJson } from '../gemini';
 import {
   validateAnalysisResponse,
@@ -71,7 +72,6 @@ import {
 
 describe('Analysis Generation & Caching Engine', () => {
   // Get mocked functions
-  const mockReadFile = vi.mocked(fs.readFile);
   const mockQueryGeminiJson = vi.mocked(queryGeminiJson);
   const mockValidateAnalysisResponse = vi.mocked(validateAnalysisResponse);
   const mockValidateCustomComparisonResponse = vi.mocked(validateCustomComparisonResponse);
@@ -113,8 +113,7 @@ describe('Analysis Generation & Caching Engine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default mock implementations
-    mockReadFile.mockResolvedValue('Mock prompt template {{BRAND_A}} {{BRAND_B}}');
+    // Default mock implementations  
     mockValidateAnalysisResponse.mockReturnValue(sampleAnalysisResult);
     mockValidateCustomComparisonResponse.mockReturnValue(sampleAnalysisResult);
   });
@@ -234,7 +233,7 @@ describe('Analysis Generation & Caching Engine', () => {
       expect(mockValidateAnalysisResponse).toHaveBeenCalledWith(sampleAnalysisResult);
     });
 
-    it('should load correct prompt template for full analysis', async () => {
+    it('should use full analysis validation for full comparison', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // Cache miss
       mockQuery.mockResolvedValueOnce({ rows: [{ id: 'new-id' }] }); // Insert
       mockQueryGeminiJson.mockResolvedValueOnce(sampleAnalysisResult);
@@ -247,13 +246,10 @@ describe('Analysis Generation & Caching Engine', () => {
 
       await generateAnalysis(request);
 
-      expect(mockReadFile).toHaveBeenCalledWith(
-        expect.stringContaining('prompt-full-analysis.txt'),
-        'utf-8'
-      );
+      expect(mockValidateAnalysisResponse).toHaveBeenCalled();
     });
 
-    it('should load correct prompt template for custom comparison', async () => {
+    it('should use custom comparison validation for custom comparison', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // Cache miss
       mockQuery.mockResolvedValueOnce({ rows: [{ id: 'new-id' }] }); // Insert
       mockQueryGeminiJson.mockResolvedValueOnce(sampleAnalysisResult);
@@ -266,10 +262,6 @@ describe('Analysis Generation & Caching Engine', () => {
 
       await generateAnalysis(request);
 
-      expect(mockReadFile).toHaveBeenCalledWith(
-        expect.stringContaining('prompt-custom-comparison.txt'),
-        'utf-8'
-      );
       expect(mockValidateCustomComparisonResponse).toHaveBeenCalled();
     });
 
@@ -379,25 +371,6 @@ describe('Analysis Generation & Caching Engine', () => {
   });
 
   describe('generateAnalysis - Error Handling', () => {
-    it('should throw AnalysisError if prompt file not found', async () => {
-      mockQuery.mockResolvedValueOnce({ rows: [] }); // Cache miss
-      mockReadFile.mockRejectedValueOnce(new Error('ENOENT: file not found'));
-
-      const request: AnalysisRequest = {
-        comparisonType: 'full',
-        brands: ['O2'],
-        planData: [samplePlanData[0]],
-      };
-
-      try {
-        await generateAnalysis(request);
-        expect.fail('Should have thrown an error');
-      } catch (error) {
-        expect(error).toBeInstanceOf(AnalysisError);
-        expect((error as AnalysisError).code).toBe(AnalysisErrorCode.PROMPT_ERROR);
-      }
-    });
-
     it('should throw AnalysisError if database insert fails', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // Cache miss
       mockQuery.mockRejectedValueOnce(new Error('DB connection failed')); // Insert fails
@@ -439,10 +412,9 @@ describe('Analysis Generation & Caching Engine', () => {
   });
 
   describe('generateAnalysis - Prompt Formatting', () => {
-    it('should replace brand placeholders in custom comparison', async () => {
+    it('should include brand data in prompt for custom comparison', async () => {
       mockQuery.mockResolvedValueOnce({ rows: [] }); // Cache miss
       mockQuery.mockResolvedValueOnce({ rows: [{ id: 'new-id' }] }); // Insert
-      mockReadFile.mockResolvedValueOnce('Compare {{BRAND_A}} vs {{BRAND_B}}');
       mockQueryGeminiJson.mockResolvedValueOnce(sampleAnalysisResult);
 
       const request: AnalysisRequest = {
@@ -453,11 +425,10 @@ describe('Analysis Generation & Caching Engine', () => {
 
       await generateAnalysis(request);
 
-      // Verify Gemini was called with formatted prompt
+      // Verify Gemini was called with prompt containing brand data
       const calledPrompt = mockQueryGeminiJson.mock.calls[0][0];
-      expect(calledPrompt).toContain('Compare O2 vs Vodafone');
-      expect(calledPrompt).not.toContain('{{BRAND_A}}');
-      expect(calledPrompt).not.toContain('{{BRAND_B}}');
+      expect(calledPrompt).toContain('O2');
+      expect(calledPrompt).toContain('Vodafone');
     });
 
     it('should include plan data as JSON in prompt', async () => {

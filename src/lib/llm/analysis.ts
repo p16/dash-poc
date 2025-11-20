@@ -9,14 +9,16 @@
 
 import { logger } from '../utils/logger';
 import { getPool } from '../db/connection';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { queryGeminiJson } from './gemini';
 import {
   validateAnalysisResponse,
   validateCustomComparisonResponse,
   ValidationError,
 } from './validation';
+
+// Import prompt templates directly
+import promptFullAnalysis from './prompts/prompt-full-analysis.txt';
+import promptCustomComparison from './prompts/prompt-custom-comparison.txt';
 
 /**
  * Type of competitive analysis comparison
@@ -130,33 +132,24 @@ interface CachedAnalysis {
 async function loadPromptTemplate(
   comparisonType: ComparisonType
 ): Promise<string> {
-  const promptFilename =
-    comparisonType === 'full'
-      ? 'prompt-full-analysis.txt'
-      : 'prompt-custom-comparison.txt';
-
-  const promptPath = path.join(
-    process.cwd(),
-    'src',
-    'lib',
-    'llm',
-    'prompts',
-    promptFilename
-  );
-
   try {
-    const template = await fs.readFile(promptPath, 'utf-8');
+    const template =
+      comparisonType === 'full' ? promptFullAnalysis : promptCustomComparison;
+
     logger.debug(
-      { comparisonType, promptPath, templateLength: template.length },
+      { comparisonType, templateLength: template.length },
       'Loaded prompt template'
     );
     return template;
   } catch (error) {
+    const promptFilename =
+      comparisonType === 'full'
+        ? 'prompt-full-analysis.txt'
+        : 'prompt-custom-comparison.txt';
     const errorMessage = `Failed to load prompt template: ${promptFilename}`;
-    logger.error({ error, promptPath }, errorMessage);
+    logger.error({ error }, errorMessage);
     throw new AnalysisError(errorMessage, AnalysisErrorCode.PROMPT_ERROR, {
       comparisonType,
-      promptPath,
       error,
     });
   }
