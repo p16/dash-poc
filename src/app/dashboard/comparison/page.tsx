@@ -12,6 +12,9 @@ import { CustomComparison } from '@/components/dashboard/CustomComparison';
 import { getAvailableBrands } from '@/lib/dashboard/available-brands';
 import { requireAuth } from '@/lib/auth/session';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ComparisonPage() {
   // Ensure user is authenticated
   await requireAuth();

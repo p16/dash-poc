@@ -17,6 +17,9 @@ import { ScrapeButton } from '@/components/dashboard/ScrapeButton';
 import { AnalysisDisplay } from '@/components/dashboard/AnalysisDisplay';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   // Ensure user is authenticated
   await requireAuth();
