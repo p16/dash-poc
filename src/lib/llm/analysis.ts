@@ -15,19 +15,25 @@ import {
   validateCustomComparisonResponse,
   ValidationError,
 } from './validation';
-import { readFileSync } from 'fs';
-import { join } from 'path';
 
-// Load prompt templates - webpack bundles these in production, fs loads in dev/test
+// Declare webpack global for type checking
+declare const __webpack_require__: unknown;
+
+// Load prompt templates
+// In Next.js webpack builds, these are bundled as strings
+// In tsx/node scripts, fs.readFileSync is used via try/catch
 let promptFullAnalysis: string;
 let promptCustomComparison: string;
 
-try {
-  // Try webpack import first (production Next.js builds)
+// Check if we're in a webpack/Next.js context
+if (typeof __webpack_require__ !== 'undefined') {
+  // Next.js webpack build - use require
   promptFullAnalysis = require('./prompts/prompt-full-analysis.txt');
   promptCustomComparison = require('./prompts/prompt-custom-comparison.txt');
-} catch {
-  // Fallback to fs.readFileSync for tsx/node scripts
+} else {
+  // Node/tsx runtime - use fs
+  const { readFileSync } = require('fs');
+  const { join } = require('path');
   promptFullAnalysis = readFileSync(
     join(__dirname, 'prompts', 'prompt-full-analysis.txt'),
     'utf-8'
