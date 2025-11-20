@@ -177,8 +177,8 @@ describe('CustomComparison', () => {
     fireEvent.change(brandBSelect, { target: { value: 'vodafone' } });
     fireEvent.click(compareButton);
 
-    expect(screen.getByText(/analyzing\.\.\./i)).toBeInTheDocument();
-    expect(screen.getByText(/analysis in progress/i)).toBeInTheDocument();
+    expect(screen.getByText(/starting analysis\.\.\./i)).toBeInTheDocument();
+    expect(screen.getByText(/this may take 4-5 minutes\.\.\./i)).toBeInTheDocument();
   });
 
   it('disables form inputs during loading', async () => {

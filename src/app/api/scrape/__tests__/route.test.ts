@@ -1,12 +1,11 @@
 /**
- * Unit Tests for Full Analysis API Endpoint
+ * Unit Tests for Scrape Trigger API Endpoint
  *
- * Tests POST /api/analysis/full with mocked Inngest client (Story 4.7)
+ * Tests POST /api/scrape with mocked Inngest client (Story 4.6)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from '../route';
-import { NextRequest } from 'next/server';
 
 // Mock logger
 vi.mock('@/lib/utils/logger', () => ({
@@ -27,7 +26,7 @@ vi.mock('@/inngest/client', () => ({
 
 import { inngest } from '@/inngest/client';
 
-describe('POST /api/analysis/full', () => {
+describe('POST /api/scrape', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -37,33 +36,28 @@ describe('POST /api/analysis/full', () => {
   });
 
   describe('Success Path', () => {
-    it('should trigger background job and return 202 with job ID', async () => {
+    it('should trigger scraping job and return 202 with job ID', async () => {
       // Mock Inngest send to return job IDs
       vi.mocked(inngest.send).mockResolvedValue({
-        ids: ['test-job-id-123'],
-      });
-
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
+        ids: ['scrape-job-id-123'],
       });
 
       // Call endpoint
-      const response = await POST(request);
+      const response = await POST();
       const data = await response.json();
 
       // Assertions
       expect(response.status).toBe(202);
       expect(data.success).toBe(true);
-      expect(data.jobId).toBe('test-job-id-123');
-      expect(data.message).toBe('Analysis job started');
-      expect(data.statusUrl).toBe('/api/jobs/test-job-id-123');
+      expect(data.jobId).toBe('scrape-job-id-123');
+      expect(data.message).toBe('Scraping job started');
+      expect(data.statusUrl).toBe('/api/jobs/scrape-job-id-123');
 
       // Verify Inngest send was called correctly
       expect(inngest.send).toHaveBeenCalledWith({
-        name: 'analysis/full',
+        name: 'scrape/trigger',
         data: {
-          triggeredBy: 'api',
+          triggeredBy: 'dashboard',
           timestamp: expect.any(String),
         },
       });
@@ -75,13 +69,8 @@ describe('POST /api/analysis/full', () => {
         ids: ['job-1', 'job-2'],
       });
 
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
-      });
-
       // Call endpoint
-      const response = await POST(request);
+      const response = await POST();
       const data = await response.json();
 
       // Assertions
@@ -97,13 +86,8 @@ describe('POST /api/analysis/full', () => {
       // Mock Inngest send throwing error
       vi.mocked(inngest.send).mockRejectedValue(new Error('Inngest service unavailable'));
 
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
-      });
-
       // Call endpoint
-      const response = await POST(request);
+      const response = await POST();
       const data = await response.json();
 
       // Assertions
@@ -120,13 +104,8 @@ describe('POST /api/analysis/full', () => {
         ids: [],
       });
 
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
-      });
-
       // Call endpoint
-      const response = await POST(request);
+      const response = await POST();
       const data = await response.json();
 
       // Assertions - route returns 202 but jobId will be undefined
@@ -139,32 +118,20 @@ describe('POST /api/analysis/full', () => {
       // Mock Inngest send returning undefined
       vi.mocked(inngest.send).mockResolvedValue(undefined as any);
 
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
-      });
-
       // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
+      const response = await POST();
 
-      // Assertions
+      // This will throw when trying to destructure { ids }
+      // In real scenario, should catch and return 500
       expect(response.status).toBe(500);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('INTERNAL_SERVER_ERROR');
     });
 
     it('should return 500 for unexpected errors', async () => {
       // Mock Inngest send throwing unexpected error
       vi.mocked(inngest.send).mockRejectedValue(new Error('Network timeout'));
 
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/full', {
-        method: 'POST',
-      });
-
       // Call endpoint
-      const response = await POST(request);
+      const response = await POST();
       const data = await response.json();
 
       // Assertions

@@ -1,13 +1,12 @@
 /**
- * Unit Tests for Custom Comparison API Endpoint
+ * Unit Tests for Custom Analysis API Endpoint
  *
- * Tests POST /api/analysis/custom with mocked database and analysis engine
+ * Tests POST /api/analysis/custom with mocked Inngest client (Story 4.7)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
-import type { Pool } from 'pg';
 
 // Mock logger
 vi.mock('@/lib/utils/logger', () => ({
@@ -19,64 +18,16 @@ vi.mock('@/lib/utils/logger', () => ({
   },
 }));
 
-// Mock database connection
-const mockQuery = vi.fn();
-const mockPool = {
-  query: mockQuery,
-} as unknown as Pool;
-
-vi.mock('@/lib/db/connection', () => ({
-  getPool: vi.fn(() => mockPool),
-}));
-
-// Mock analysis engine
-vi.mock('@/lib/llm/analysis', () => ({
-  generateAnalysis: vi.fn(),
-  AnalysisError: class extends Error {
-    constructor(message: string, public code: string, public context?: any) {
-      super(message);
-      this.name = 'AnalysisError';
-    }
-  },
-  AnalysisErrorCode: {
-    INVALID_REQUEST: 'INVALID_REQUEST',
-    RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
-    DATABASE_ERROR: 'DATABASE_ERROR',
-    API_FAILURE: 'API_FAILURE',
-    VALIDATION_FAILED: 'VALIDATION_FAILED',
-    PROMPT_ERROR: 'PROMPT_ERROR',
+// Mock Inngest client
+vi.mock('@/inngest/client', () => ({
+  inngest: {
+    send: vi.fn(),
   },
 }));
 
-import { generateAnalysis, AnalysisError, AnalysisErrorCode } from '@/lib/llm/analysis';
+import { inngest } from '@/inngest/client';
 
 describe('POST /api/analysis/custom', () => {
-  const mockPlanData = [
-    {
-      id: '123e4567-e89b-12d3-a456-426614174000',
-      source: 'O2',
-      plan_data: { name: 'O2 Plan', price: 10 },
-      scrape_timestamp: new Date('2025-11-18'),
-    },
-    {
-      id: '123e4567-e89b-12d3-a456-426614174001',
-      source: 'Vodafone',
-      plan_data: { name: 'Vodafone Plan', price: 15 },
-      scrape_timestamp: new Date('2025-11-18'),
-    },
-  ];
-
-  const mockAnalysisResult = {
-    cached: false,
-    analysisId: '123e4567-e89b-12d3-a456-426614174002',
-    createdAt: new Date('2025-11-18'),
-    data: {
-      analysis_timestamp: '2025-11-18T10:00:00Z',
-      brandA_analysis: {},
-      brandB_analysis: {},
-    },
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -86,19 +37,19 @@ describe('POST /api/analysis/custom', () => {
   });
 
   describe('Success Path', () => {
-    it('should return custom comparison results', async () => {
-      // Mock database query
-      mockQuery.mockResolvedValue({
-        rows: mockPlanData,
+    it('should trigger background job and return 202 with job ID', async () => {
+      // Mock Inngest send to return job IDs
+      vi.mocked(inngest.send).mockResolvedValue({
+        ids: ['test-job-id-456'],
       });
 
-      // Mock analysis engine
-      vi.mocked(generateAnalysis).mockResolvedValue(mockAnalysisResult);
-
-      // Create request with valid body
+      // Create request
       const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
         method: 'POST',
-        body: JSON.stringify({ brandA: 'O2', brandB: 'Vodafone' }),
+        body: JSON.stringify({
+          brandA: 'O2',
+          brandB: 'Vodafone',
+        }),
       });
 
       // Call endpoint
@@ -106,29 +57,75 @@ describe('POST /api/analysis/custom', () => {
       const data = await response.json();
 
       // Assertions
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(202);
       expect(data.success).toBe(true);
-      expect(data.cached).toBe(false);
-      expect(data.analysisId).toBe(mockAnalysisResult.analysisId);
-      expect(data.metadata.brands).toEqual(['O2', 'Vodafone']);
+      expect(data.jobId).toBe('test-job-id-456');
+      expect(data.message).toBe('Custom comparison job started');
+      expect(data.brandA).toBe('O2');
+      expect(data.brandB).toBe('Vodafone');
+      expect(data.statusUrl).toBe('/api/jobs/test-job-id-456');
 
-      // Verify analysis engine was called correctly
-      expect(generateAnalysis).toHaveBeenCalledWith({
-        comparisonType: 'custom',
-        brands: ['O2', 'Vodafone'],
-        planData: mockPlanData,
+      // Verify Inngest send was called correctly
+      expect(inngest.send).toHaveBeenCalledWith({
+        name: 'analysis/custom',
+        data: {
+          brandA: 'O2',
+          brandB: 'Vodafone',
+          triggeredBy: 'api',
+          timestamp: expect.any(String),
+        },
       });
-
-      // Verify database was queried with correct brands
-      expect(mockQuery).toHaveBeenCalledWith(
-        expect.stringContaining('source = $1 OR source = $2'),
-        ['O2', 'Vodafone']
-      );
     });
   });
 
-  describe('Request Validation', () => {
-    it('should return 400 if request body is invalid JSON', async () => {
+  describe('Validation', () => {
+    it('should return 400 when brandA is missing', async () => {
+      // Create request without brandA
+      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
+        method: 'POST',
+        body: JSON.stringify({
+          brandB: 'Vodafone',
+        }),
+      });
+
+      // Call endpoint
+      const response = await POST(request);
+      const data = await response.json();
+
+      // Assertions
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('INVALID_REQUEST');
+      expect(data.message).toContain('brandA');
+
+      // Inngest should not be called
+      expect(inngest.send).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when brandB is missing', async () => {
+      // Create request without brandB
+      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
+        method: 'POST',
+        body: JSON.stringify({
+          brandA: 'O2',
+        }),
+      });
+
+      // Call endpoint
+      const response = await POST(request);
+      const data = await response.json();
+
+      // Assertions
+      expect(response.status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error).toBe('INVALID_REQUEST');
+      expect(data.message).toContain('brandB');
+
+      // Inngest should not be called
+      expect(inngest.send).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when request body is invalid JSON', async () => {
       // Create request with invalid JSON
       const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
         method: 'POST',
@@ -144,150 +141,24 @@ describe('POST /api/analysis/custom', () => {
       expect(data.success).toBe(false);
       expect(data.error).toBe('INVALID_REQUEST');
       expect(data.message).toContain('valid JSON');
-    });
 
-    it('should return 400 if brandA is missing', async () => {
-      // Create request without brandA
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandB: 'Vodafone' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('INVALID_REQUEST');
-      expect(data.message).toContain('brandA');
-    });
-
-    it('should return 400 if brandB is missing', async () => {
-      // Create request without brandB
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandA: 'O2' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('INVALID_REQUEST');
-      expect(data.message).toContain('brandB');
-    });
-
-    it('should return 400 if brandA is not a string', async () => {
-      // Create request with non-string brandA
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandA: 123, brandB: 'Vodafone' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('INVALID_REQUEST');
-      expect(data.message).toContain('brandA');
-      expect(data.message).toContain('string');
-    });
-  });
-
-  describe('Data Availability', () => {
-    it('should return 404 if no plans found for any brand', async () => {
-      // Mock empty database result
-      mockQuery.mockResolvedValue({
-        rows: [],
-      });
-
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandA: 'O2', brandB: 'Vodafone' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('NO_DATA_FOUND');
-      expect(data.message).toContain('O2');
-      expect(data.message).toContain('Vodafone');
-    });
-
-    it('should return 404 if only one brand has data', async () => {
-      // Mock database returning only O2 data
-      mockQuery.mockResolvedValue({
-        rows: [mockPlanData[0]], // Only O2 plan
-      });
-
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandA: 'O2', brandB: 'Vodafone' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(404);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('INCOMPLETE_DATA');
-      expect(data.message).toContain('Vodafone');
-      expect(data.message).toContain('Found data for: O2');
+      // Inngest should not be called
+      expect(inngest.send).not.toHaveBeenCalled();
     });
   });
 
   describe('Error Handling', () => {
-    it('should return 500 for AnalysisError', async () => {
-      // Mock database query
-      mockQuery.mockResolvedValue({
-        rows: mockPlanData,
-      });
-
-      // Mock analysis engine throwing error
-      vi.mocked(generateAnalysis).mockRejectedValue(
-        new AnalysisError('Analysis failed', AnalysisErrorCode.API_FAILURE)
-      );
+    it('should return 500 when Inngest send fails', async () => {
+      // Mock Inngest send throwing error
+      vi.mocked(inngest.send).mockRejectedValue(new Error('Inngest service unavailable'));
 
       // Create request
       const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
         method: 'POST',
-        body: JSON.stringify({ brandA: 'O2', brandB: 'Vodafone' }),
-      });
-
-      // Call endpoint
-      const response = await POST(request);
-      const data = await response.json();
-
-      // Assertions
-      expect(response.status).toBe(500);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('API_FAILURE');
-    });
-
-    it('should return 500 for unexpected errors', async () => {
-      // Mock database query throwing error
-      mockQuery.mockRejectedValue(new Error('Database connection failed'));
-
-      // Create request
-      const request = new NextRequest('http://localhost:3000/api/analysis/custom', {
-        method: 'POST',
-        body: JSON.stringify({ brandA: 'O2', brandB: 'Vodafone' }),
+        body: JSON.stringify({
+          brandA: 'O2',
+          brandB: 'Vodafone',
+        }),
       });
 
       // Call endpoint
@@ -298,6 +169,7 @@ describe('POST /api/analysis/custom', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.error).toBe('INTERNAL_SERVER_ERROR');
+      expect(data.message).toContain('Failed to trigger');
     });
   });
 });

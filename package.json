@@ -18,6 +18,7 @@
     "test:gemini": "tsx src/scripts/test-gemini.ts",
     "test:comparison": "tsx src/scripts/test-custom-comparison.ts",
     "test:full-analysis": "tsx src/scripts/test-full-analysis.ts",
+    "test:inngest-api": "tsx src/scripts/test-inngest-api.ts",
     "scrape": "tsx src/scripts/scrape.ts",
     "scrape:poc": "tsx src/scripts/scrape-poc.ts",
     "scrape:telcos": "tsx src/scripts/scrape-telcos.ts",
@@ -26,7 +27,8 @@
     "migrate": "tsx src/scripts/run-migration.ts",
     "clear:plans": "tsx src/scripts/clear-plans.ts",
     "clear:analysis": "tsx src/scripts/clear-analysis-cache.ts",
-    "clear:all": "npm run clear:plans && npm run clear:analysis"
+    "clear:events": "tsx src/scripts/clear-events.ts",
+    "clear:all": "npm run clear:plans && npm run clear:analysis && npm run clear:events"
   },
   "description": "Competitive intelligence platform for telecom pricing analysis",
   "dependencies": {
@@ -35,6 +37,7 @@
     "@types/react": "^19.2.4",
     "@types/react-dom": "^19.2.3",
     "dotenv": "^17.2.3",
+    "inngest": "^3.45.1",
     "lucide-react": "^0.553.0",
     "next": "^16.0.3",
     "pg": "^8.16.3",
@@ -46,8 +49,10 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@playwright/test": "^1.56.1",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/pg": "^8.15.6",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",

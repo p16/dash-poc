@@ -1,18 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, GitCompare } from 'lucide-react';
+import { Sparkles, GitCompare, ExternalLink, Loader2, CheckCircle2, AlertCircle, Table } from 'lucide-react';
 import Link from 'next/link';
 
 export function QuickActions() {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   const handleRunFullAnalysis = async () => {
     setIsRunning(true);
     setError(null);
-    setSuccess(false);
+    setJobId(null);
 
     try {
       const response = await fetch('/api/analysis/full', {
@@ -21,18 +21,33 @@ export function QuickActions() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to run analysis');
+        throw new Error(data.error || 'Failed to start analysis');
       }
 
-      setSuccess(true);
-      // Reload the page to show the new analysis
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      const data = await response.json();
+      setJobId(data.jobId);
+
+      // Save event ID to database for tracking
+      if (data.jobId) {
+        try {
+          await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: data.jobId,
+              eventName: 'analysis/full',
+            }),
+          });
+        } catch (saveError) {
+          console.error('Failed to save event to database:', saveError);
+        }
+      }
+
+      // Don't reload immediately - let user check job status
+      setIsRunning(false);
     } catch (err) {
       console.error('Error running analysis:', err);
-      setError(err instanceof Error ? err.message : 'Failed to run analysis');
-    } finally {
+      setError(err instanceof Error ? err.message : 'Failed to start analysis');
       setIsRunning(false);
     }
   };
@@ -43,13 +58,31 @@ export function QuickActions() {
 
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{error}</p>
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-red-800">{error}</p>
+          </div>
         </div>
       )}
 
-      {success && (
+      {jobId && (
         <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-green-800">Analysis completed successfully! Refreshing...</p>
+          <div className="flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-green-800 font-medium">Analysis job started!</p>
+              <p className="text-xs text-green-700 mt-1">
+                Job ID: <code className="bg-green-100 px-1 rounded">{jobId}</code>
+              </p>
+              <p className="text-xs text-green-700 mt-2">
+                This will take 4-5 minutes. Check the{' '}
+                <Link href="/monitor" className="underline font-medium hover:text-green-800">
+                  monitor page
+                </Link>{' '}
+                to track progress, or refresh this page in a few minutes.
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -60,8 +93,17 @@ export function QuickActions() {
           disabled={isRunning}
           className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-lg transition-colors"
         >
-          <Sparkles className="h-5 w-5" />
-          {isRunning ? 'Running Analysis...' : 'Run Full Analysis'}
+          {isRunning ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Starting...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5" />
+              Run Full Analysis
+            </>
+          )}
         </button>
 
         {/* Custom Comparison Link */}
@@ -72,11 +114,29 @@ export function QuickActions() {
           <GitCompare className="h-5 w-5" />
           Custom Comparison
         </Link>
+
+        {/* Browse Plans Link */}
+        <Link
+          href="/dashboard/plans"
+          className="flex-1 flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+        >
+          <Table className="h-5 w-5" />
+          Browse Plans
+        </Link>
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
-        Note: Full analysis may take 2-5 minutes to complete
-      </p>
+      <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
+        <div className="flex-1">
+          <p>💡 Analysis runs in the background (4-5 minutes)</p>
+        </div>
+        <Link
+          href="/monitor"
+          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+        >
+          <ExternalLink className="h-3 w-3" />
+          Monitor jobs
+        </Link>
+      </div>
     </div>
   );
 }

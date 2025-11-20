@@ -4,6 +4,8 @@
  * Protected route - requires authentication to access.
  * Story: 4.1 - Password Authentication (logout functionality)
  * Story: 4.2 - Dashboard Home Screen
+ * Story: 4.6 - Trigger Scrape from Dashboard (Button)
+ * Story: 4.7 - Inngest Integration
  */
 
 import { requireAuth } from '@/lib/auth/session';
@@ -11,6 +13,7 @@ import { getScrapeStatus } from '@/lib/dashboard/scrape-status';
 import { getLatestFullAnalysis } from '@/lib/dashboard/latest-analysis';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { ScrapeStatus } from '@/components/dashboard/ScrapeStatus';
+import { ScrapeButton } from '@/components/dashboard/ScrapeButton';
 import { AnalysisDisplay } from '@/components/dashboard/AnalysisDisplay';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 
@@ -48,6 +51,9 @@ export default async function DashboardPage() {
           <div className="space-y-6">
             {/* Scrape Status Section */}
             {scrapeStatus && <ScrapeStatus status={scrapeStatus} />}
+
+            {/* Scrape Button */}
+            <ScrapeButton />
 
             {/* Quick Actions */}
             <QuickActions />

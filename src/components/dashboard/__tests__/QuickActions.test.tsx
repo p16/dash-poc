@@ -44,8 +44,9 @@ describe('QuickActions Component', () => {
     expect(screen.getByText('Quick Actions')).toBeInTheDocument();
     expect(screen.getByText('Run Full Analysis')).toBeInTheDocument();
     expect(screen.getByText('Custom Comparison')).toBeInTheDocument();
+    expect(screen.getByText('Browse Plans')).toBeInTheDocument();
     expect(
-      screen.getByText(/Note: Full analysis may take 2-5 minutes to complete/)
+      screen.getByText(/Analysis runs in the background/)
     ).toBeInTheDocument();
   });
 
@@ -91,7 +92,7 @@ describe('QuickActions Component', () => {
     fireEvent.click(runButton);
 
     // Should show loading text
-    expect(screen.getByText('Running Analysis...')).toBeInTheDocument();
+    expect(screen.getByText('Starting...')).toBeInTheDocument();
 
     // Button should be disabled
     expect(runButton).toBeDisabled();

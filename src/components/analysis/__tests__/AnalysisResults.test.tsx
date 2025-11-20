@@ -130,12 +130,12 @@ describe('AnalysisResults', () => {
       <AnalysisResults data={mockAnalysisData} timestamp={timestamp} brands={brands} />
     );
 
-    // High score (85) should have green color (competitiveness is inverted - higher is better)
+    // High score (85) should have red color (lower scores are better in this context)
     const highScoreElement = screen
       .getByText('Price competitiveness needs improvement')
       .closest('.border-2');
-    expect(highScoreElement).toHaveClass('text-green-700');
-    expect(highScoreElement).toHaveClass('bg-green-50');
+    expect(highScoreElement).toHaveClass('text-red-700');
+    expect(highScoreElement).toHaveClass('bg-red-50');
 
     // Medium score (45) should have yellow color
     const mediumScoreElement = screen

@@ -2,16 +2,19 @@
  * Custom Brand Comparison Component
  *
  * Client component that allows users to select two brands and trigger
- * custom competitive analysis. Displays results using AnalysisResults component.
+ * custom competitive analysis using Inngest background jobs.
+ * Displays job status and links to monitor page for tracking.
  *
  * Story: 4.4 - Custom Brand Comparison Tool
+ * Story: 4.7 - Inngest Integration
  */
 
 'use client';
 
 import { useState } from 'react';
-import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 import { CustomComparisonResults } from '@/components/analysis/CustomComparisonResults';
+import Link from 'next/link';
 import type { CustomComparisonAnalysis } from '@/types/analysis';
 
 type Props = {
@@ -20,7 +23,7 @@ type Props = {
 
 type ComparisonState =
   | { status: 'idle' }
-  | { status: 'loading' }
+  | { status: 'loading'; jobId?: string }
   | { status: 'success'; data: CustomComparisonAnalysis; brands: string[]; cached: boolean; timestamp: Date }
   | { status: 'error'; message: string };
 
@@ -53,6 +56,32 @@ export function CustomComparison({ brands }: Props) {
       }
 
       const result = await response.json();
+
+      // If it's a job ID response (202), show job started message
+      if (result.jobId) {
+        // Save event ID to database for tracking
+        try {
+          await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              eventId: result.jobId,
+              eventName: 'analysis/custom',
+              metadata: { brandA, brandB },
+            }),
+          });
+        } catch (saveError) {
+          console.error('Failed to save event to database:', saveError);
+        }
+
+        setState({
+          status: 'loading',
+          jobId: result.jobId,
+        });
+        return;
+      }
+
+      // Otherwise it's the actual analysis result (cached)
       setState({
         status: 'success',
         data: result.analysis,
@@ -145,25 +174,47 @@ export function CustomComparison({ brands }: Props) {
           {state.status === 'loading' ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Analyzing... (may take up to 5 minutes)
+              {state.jobId ? 'Job started...' : 'Starting analysis...'}
             </>
           ) : (
             'Compare Brands'
           )}
         </button>
+
+        {state.status === 'loading' && !state.jobId && (
+          <p className="mt-2 text-xs text-gray-500">
+            This may take 4-5 minutes...
+          </p>
+        )}
       </div>
 
-      {/* Loading State */}
-      {state.status === 'loading' && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+      {/* Job Started Message */}
+      {state.status === 'loading' && state.jobId && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
           <div className="flex items-start gap-3">
-            <Loader2 className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-blue-900">Analysis in progress</h3>
-              <p className="text-sm text-blue-700 mt-1">
-                Generating competitive analysis for {brandA} vs {brandB}. This may take up to 5
-                minutes while we analyze the data and generate insights.
+            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-medium text-green-900">Comparison job started!</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Comparing <strong>{brandA}</strong> vs <strong>{brandB}</strong>
               </p>
+              <p className="text-xs text-green-600 mt-2">
+                Job ID: <code className="bg-green-100 px-1 rounded">{state.jobId}</code>
+              </p>
+              <p className="text-sm text-green-700 mt-3">
+                This will take 4-5 minutes. You can:
+              </p>
+              <ul className="text-sm text-green-700 mt-2 space-y-1 ml-4 list-disc">
+                <li>
+                  Check the{' '}
+                  <Link href="/monitor" className="underline font-medium hover:text-green-800">
+                    monitor page <ExternalLink className="inline h-3 w-3" />
+                  </Link>{' '}
+                  to track progress
+                </li>
+                <li>Come back to this page in a few minutes and refresh</li>
+                <li>Check the dashboard for the latest analysis</li>
+              </ul>
             </div>
           </div>
         </div>
