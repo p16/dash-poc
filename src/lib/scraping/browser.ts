@@ -18,12 +18,17 @@ export async function launchBrowser(): Promise<Browser> {
   const browserlessToken = process.env.BROWSERLESS_TOKEN;
   const isProduction = process.env.VERCEL || process.env.NODE_ENV === 'production';
 
+  if (isProduction && !browserlessToken) {
+    throw new Error('BROWSERLESS_TOKEN environment variable is required in production');
+  }
+
   // Use Browserless cloud service if token is provided
+  // if (isProduction && browserlessToken) {
   if (isProduction && browserlessToken) {
     logger.info('Connecting to Browserless cloud browser');
 
     // Use Playwright-specific endpoint
-    const wsEndpoint = `wss://production-sfo.browserless.io/chromium/playwright?token=${browserlessToken}`;
+    const wsEndpoint = `wss://production-lon.browserless.io/chromium/playwright?token=${browserlessToken}&timeout=60000`;
 
     try {
       const browser = await chromium.connect(wsEndpoint, {
@@ -39,45 +44,24 @@ export async function launchBrowser(): Promise<Browser> {
         endpoint: 'wss://production-sfo.browserless.io/chromium/playwright',
       }, 'Failed to connect to Browserless, falling back to local');
 
-      // Fall back to local in development
-      if (!isProduction) {
-        logger.info('Falling back to local Playwright browser');
-        const browser = await chromium.launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-blink-features=AutomationControlled',
-            '--disable-dev-shm-usage',
-          ],
-        });
-        return browser;
-      }
-
-      // In production, throw the error
-      throw new Error('Failed to connect to Browserless cloud browser');
+      throw error;
     }
   }
 
   // Development: Use local Playwright
-  if (!isProduction) {
-    logger.info('Launching local Playwright browser');
+  logger.info('Launching local Playwright browser');
 
-    const browser = await chromium.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-blink-features=AutomationControlled',
-        '--disable-dev-shm-usage',
-      ],
-    });
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-dev-shm-usage',
+    ],
+  });
 
-    return browser;
-  }
-
-  // Production without Browserless token - error
-  throw new Error('BROWSERLESS_TOKEN environment variable is required in production');
+  return browser;
 }
 
 /**

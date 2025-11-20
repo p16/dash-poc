@@ -34,6 +34,7 @@ export const scrapeAllPlans = inngest.createFunction(
     concurrency: {
       limit: 1, // Only one scrape at a time
     },
+    retries: 0, // Disable automatic retries
   },
   { event: 'scrape/trigger' },
   async ({ event, step }) => {
@@ -321,6 +322,7 @@ export const runFullAnalysis = inngest.createFunction(
     concurrency: {
       limit: 2, // Allow 2 concurrent analyses
     },
+    retries: 0, // Disable automatic retries to avoid hitting rate limits
   },
   { event: 'analysis/full' },
   async ({ event, step }) => {
@@ -437,6 +439,7 @@ export const runCustomComparison = inngest.createFunction(
     concurrency: {
       limit: 3, // Allow 3 concurrent custom comparisons
     },
+    retries: 0, // Disable automatic retries to avoid hitting rate limits
   },
   { event: 'analysis/custom' },
   async ({ event, step }) => {

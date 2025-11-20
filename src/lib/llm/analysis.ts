@@ -15,10 +15,28 @@ import {
   validateCustomComparisonResponse,
   ValidationError,
 } from './validation';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-// Import prompt templates directly
-import promptFullAnalysis from './prompts/prompt-full-analysis.txt';
-import promptCustomComparison from './prompts/prompt-custom-comparison.txt';
+// Load prompt templates - webpack bundles these in production, fs loads in dev/test
+let promptFullAnalysis: string;
+let promptCustomComparison: string;
+
+try {
+  // Try webpack import first (production Next.js builds)
+  promptFullAnalysis = require('./prompts/prompt-full-analysis.txt');
+  promptCustomComparison = require('./prompts/prompt-custom-comparison.txt');
+} catch {
+  // Fallback to fs.readFileSync for tsx/node scripts
+  promptFullAnalysis = readFileSync(
+    join(__dirname, 'prompts', 'prompt-full-analysis.txt'),
+    'utf-8'
+  );
+  promptCustomComparison = readFileSync(
+    join(__dirname, 'prompts', 'prompt-custom-comparison.txt'),
+    'utf-8'
+  );
+}
 
 /**
  * Type of competitive analysis comparison
