@@ -61,7 +61,6 @@ All analyses are performed on plans scraped within the last 180 days. This means
 
 The Vodafone scraper may not work reliably:
 
-- **Scraping Failures**: The Vodafone website structure may have changed, causing the scraper to fail or return incomplete data
 - **Missing Data**: Vodafone plans may be missing or outdated in analyses if the scraper is not functioning
 - **Impact on Comparisons**: Full analyses that include Vodafone may show incomplete results or fail to include Vodafone plans
 
