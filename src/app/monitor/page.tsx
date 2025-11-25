@@ -68,7 +68,7 @@ export default function JobMonitorPage() {
     try {
       // Add timeout to prevent hanging
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 second timeout (longer than API timeout)
 
       const response = await fetch(`/api/jobs/runs?eventId=${eventId}`, {
         signal: controller.signal,
