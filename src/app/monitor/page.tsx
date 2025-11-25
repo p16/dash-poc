@@ -22,6 +22,7 @@ interface EventRuns {
   eventName: string;
   runs: Run[];
   metadata?: Record<string, any>;
+  loadingStatus?: 'loading' | 'success' | 'error' | 'timeout';
 }
 
 export default function JobMonitorPage() {
@@ -47,6 +48,7 @@ export default function JobMonitorPage() {
             eventName: event.event_name,
             runs: [],
             metadata: event.metadata,
+            loadingStatus: 'loading' as const,
           }))
         );
 
@@ -78,27 +80,32 @@ export default function JobMonitorPage() {
         const data = await response.json();
         setEventRuns(prev => {
           const filtered = prev.filter(e => e.eventId !== eventId);
-          return [...filtered, { eventId, eventName, runs: data.runs || [], metadata }];
+          return [...filtered, { eventId, eventName, runs: data.runs || [], metadata, loadingStatus: 'success' as const }];
         });
       } else {
         console.warn(`Failed to fetch runs for event ${eventId}:`, response.status);
         // Still add the event with empty runs so it shows up
         setEventRuns(prev => {
           const filtered = prev.filter(e => e.eventId !== eventId);
-          return [...filtered, { eventId, eventName, runs: [], metadata }];
+          return [...filtered, { eventId, eventName, runs: [], metadata, loadingStatus: 'error' as const }];
         });
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         console.warn(`Timeout fetching runs for event ${eventId}`);
+        // Mark as timeout
+        setEventRuns(prev => {
+          const filtered = prev.filter(e => e.eventId !== eventId);
+          return [...filtered, { eventId, eventName, runs: [], metadata, loadingStatus: 'timeout' as const }];
+        });
       } else {
         console.error('Error fetching runs:', error);
+        // Add event with empty runs even on error
+        setEventRuns(prev => {
+          const filtered = prev.filter(e => e.eventId !== eventId);
+          return [...filtered, { eventId, eventName, runs: [], metadata, loadingStatus: 'error' as const }];
+        });
       }
-      // Add event with empty runs even on error
-      setEventRuns(prev => {
-        const filtered = prev.filter(e => e.eventId !== eventId);
-        return [...filtered, { eventId, eventName, runs: [], metadata }];
-      });
     }
   };
 
@@ -240,9 +247,31 @@ export default function JobMonitorPage() {
                 </CardHeader>
                 <CardContent>
                   {event.runs.length === 0 ? (
-                    <div className="flex items-center gap-2 text-sm text-gray-500 italic">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Loading status...</span>
+                    <div className="flex items-center gap-2 text-sm">
+                      {event.loadingStatus === 'loading' && (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                          <span className="text-gray-500 italic">Loading status...</span>
+                        </>
+                      )}
+                      {event.loadingStatus === 'timeout' && (
+                        <>
+                          <AlertCircle className="h-4 w-4 text-orange-500" />
+                          <span className="text-orange-600">Request timed out - status unavailable</span>
+                        </>
+                      )}
+                      {event.loadingStatus === 'error' && (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          <span className="text-red-600">Failed to load status</span>
+                        </>
+                      )}
+                      {event.loadingStatus === 'success' && (
+                        <>
+                          <AlertCircle className="h-4 w-4 text-gray-400" />
+                          <span className="text-gray-500 italic">No run information available</span>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
