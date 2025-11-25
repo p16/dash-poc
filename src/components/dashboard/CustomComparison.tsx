@@ -47,7 +47,7 @@ type Props = {
 type ComparisonState =
   | { status: 'idle' }
   | { status: 'loading'; jobId?: string }
-  | { status: 'success'; data: CustomComparisonAnalysis; brands: string[]; cached: boolean; timestamp: Date }
+  | { status: 'success'; data: CustomComparisonAnalysis; brands: string[]; cached: boolean; timestamp: Date; analysisId?: string }
   | { status: 'error'; message: string };
 
 export function CustomComparison({ brands }: Props) {
@@ -71,6 +71,39 @@ export function CustomComparison({ brands }: Props) {
       }
     } catch (error) {
       console.error('Error loading analyses:', error);
+    }
+  };
+
+  const loadAnalysisById = async (id: string) => {
+    try {
+      setState({ status: 'loading' });
+      
+      const response = await fetch(`/api/analysis/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to load analysis');
+      }
+
+      const analysis = await response.json();
+      
+      setState({
+        status: 'success',
+        data: analysis.analysisResult,
+        brands: analysis.brands,
+        cached: true, // Historical analyses are always cached
+        timestamp: new Date(analysis.createdAt),
+        analysisId: id, // Track the analysis ID for "View Full Details" link
+      });
+
+      // Update the brand selectors to match the loaded analysis
+      if (analysis.brands.length >= 2) {
+        setBrandA(analysis.brands[0]);
+        setBrandB(analysis.brands[1]);
+      }
+    } catch (error) {
+      setState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Failed to load analysis',
+      });
     }
   };
 
@@ -249,9 +282,9 @@ export function CustomComparison({ brands }: Props) {
               <div className="space-y-3">
                 {analyses.slice(0, showAllAnalyses ? 10 : 3).map((analysis) => (
                   <div key={analysis.id} className="border-b border-gray-200 pb-3 last:border-0">
-                    <Link
-                      href={`/dashboard/analysis/${analysis.id}`}
-                      className="group block hover:bg-gray-50 -mx-2 px-2 py-1 rounded transition-colors"
+                    <button
+                      onClick={() => loadAnalysisById(analysis.id)}
+                      className="group w-full text-left hover:bg-gray-50 -mx-2 px-2 py-1 rounded transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
@@ -269,7 +302,7 @@ export function CustomComparison({ brands }: Props) {
                           View
                         </span>
                       </div>
-                    </Link>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -346,13 +379,24 @@ export function CustomComparison({ brands }: Props) {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-start justify-between">
-                <div>
+                <div className="flex-1">
                   <h2 className="text-2xl font-bold text-gray-900">
                     {state.brands[0]} vs {state.brands[1]}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">
                     {formatDistanceToNow(state.timestamp, { addSuffix: true })}
                   </p>
+                  {state.analysisId && (
+                    <div className="mt-3">
+                      <Link
+                        href={`/dashboard/analysis/${state.analysisId}`}
+                        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 hover:underline"
+                      >
+                        View Full Details Page
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 {state.cached && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">

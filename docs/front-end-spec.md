@@ -389,6 +389,7 @@ graph TD
 - **Sticky Left Panel:** Tools always accessible even when scrolling results
 - **Collapsed Recent List:** Shows only 3 most recent, "Show more" to expand
 - **Independent Scrolling:** Right panel scrolls if analysis is long, left panel stays fixed
+- **In-Panel Loading:** Clicking "View" on recent analyses loads results into right panel (no navigation to new page)
 
 **Mobile Adaptation (<768px):**
 - Tab Navigation instead of split panel
