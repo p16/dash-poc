@@ -103,8 +103,8 @@ describe('POST /api/auth/login', () => {
         httpOnly: true,
         secure: false, // NODE_ENV is not 'production' in tests
         sameSite: 'lax',
-        maxAge: 604800, // 7 days
         path: '/',
+        // No maxAge - session cookie expires when browser closes
       })
     );
   });

@@ -12,7 +12,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 const SESSION_COOKIE_NAME = 'dashboard-session';
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,8 +53,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: SESSION_MAX_AGE,
-      path: '/',
+      path: '/'
     });
 
     return NextResponse.json(

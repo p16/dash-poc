@@ -12,7 +12,7 @@ import { PlansContent } from '@/components/dashboard/PlansContent';
 import { requireAuth } from '@/lib/auth/session';
 import { getLatestPlans } from '@/lib/dashboard/plans';
 import { Suspense } from 'react';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';

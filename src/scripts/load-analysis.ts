@@ -16,7 +16,7 @@ async function loadAnalyses() {
   const pool = getPool();
 
   try {
-    console.log('Fetching all analyses from database...\n');
+    console.warn('Fetching all analyses from database...\n');
 
     const result = await pool.query(`
       SELECT
@@ -28,23 +28,23 @@ async function loadAnalyses() {
       FROM analyses
       ORDER BY created_at DESC
     `);    if (result.rows.length === 0) {
-      console.log('No analyses found in database.');
+      console.warn('No analyses found in database.');
       return;
     }
 
-    console.log(`Found ${result.rows.length} analyses:\n`);
-    console.log('─'.repeat(120));
+    console.warn(`Found ${result.rows.length} analyses:\n`);
+    console.warn('─'.repeat(120));
 
     result.rows.forEach((analysis, index) => {
-      console.log(`\n${index + 1}. ID: ${analysis.id}`);
-      console.log(`   Type: ${analysis.comparison_type}`);
-      console.log(`   Brands: ${analysis.brands.join(', ')}`);
-      console.log(`   Created: ${new Date(analysis.created_at).toLocaleString()}`);
-      console.log(`   Plan IDs: ${analysis.plan_ids.length} plans`);
-      console.log('─'.repeat(120));
+      console.warn(`\n${index + 1}. ID: ${analysis.id}`);
+      console.warn(`   Type: ${analysis.comparison_type}`);
+      console.warn(`   Brands: ${analysis.brands.join(', ')}`);
+      console.warn(`   Created: ${new Date(analysis.created_at).toLocaleString()}`);
+      console.warn(`   Plan IDs: ${analysis.plan_ids.length} plans`);
+      console.warn('─'.repeat(120));
     });
 
-    console.log(`\nTotal: ${result.rows.length} analyses`);
+    console.warn(`\nTotal: ${result.rows.length} analyses`);
   } catch (error) {
     console.error('Error fetching analyses:', error);
     throw error;

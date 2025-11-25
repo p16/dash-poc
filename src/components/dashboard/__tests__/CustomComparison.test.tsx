@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CustomComparison } from '../CustomComparison';
 import React from 'react';
@@ -26,7 +26,7 @@ vi.mock('@/components/ui/select', () => ({
       </div>
     );
   },
-  SelectTrigger: ({ children, className, onValueChange, currentValue, ...props }: any) => (
+  SelectTrigger: ({ children, className, currentValue, ...props }: any) => (
     <button
       {...props}
       className={className}
@@ -134,10 +134,12 @@ describe('CustomComparison', () => {
     expect(screen.getByText(/select two brands and click compare/i)).toBeInTheDocument();
   });
 
-  it('shows "No recent comparisons" when analyses list is empty', () => {
+  it('shows "No recent comparisons" when analyses list is empty', async () => {
     render(<CustomComparison brands={mockBrands} />);
 
-    expect(screen.getByText('No recent comparisons')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('No recent comparisons')).toBeInTheDocument();
+    });
   });
 
   it('populates dropdowns with available brands', () => {

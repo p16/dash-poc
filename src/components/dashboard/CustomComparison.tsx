@@ -11,7 +11,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, CheckCircle2, ExternalLink, Clock } from 'lucide-react';
+import { Loader2, AlertCircle, ExternalLink, Clock } from 'lucide-react';
 import { CustomComparisonResults } from '@/components/analysis/CustomComparisonResults';
 import {
   Select,

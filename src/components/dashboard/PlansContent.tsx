@@ -207,7 +207,7 @@ export function PlansContent({ initialPlans }: Props) {
         title: 'Export successful',
         description: `Exported ${filteredAndSortedPlans.length} plans to CSV`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Export failed',
         description: 'Failed to export CSV file',
