@@ -7,13 +7,11 @@
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { requireAuth } from '@/lib/auth/session';
 import { getPool } from '@/lib/db/connection';
 import { AnalysisResults } from '@/components/analysis/AnalysisResults';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -65,6 +63,9 @@ export default async function AnalysisDetailPage({
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+  });
+
+  const formattedTime = new Date(analysis.created_at).toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -73,52 +74,62 @@ export default async function AnalysisDetailPage({
   const isCached = Date.now() - new Date(analysis.created_at).getTime() < 24 * 60 * 60 * 1000;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
 
-      <main className="container-custom py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+          <Link href="/dashboard" className="hover:text-gray-900">
             Dashboard
           </Link>
-          <span>›</span>
-          <span className="text-foreground">Analysis</span>
-          <span>›</span>
-          <span className="text-foreground">{formattedDate}</span>
+          <ChevronRight className="w-4 h-4" />
+          <Link href="/dashboard/comparison" className="hover:text-gray-900">
+            Brand Comparison
+          </Link>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">{formattedDate}</span>
         </nav>
 
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">{title}</h1>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span>
-                  {formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true })}
-                </span>
-                {isCached && (
-                  <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-                    Cached Result
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-4 mb-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+          <Link
+            href="/dashboard/comparison"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+          >
+            Run New Comparison
+          </Link>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <Button asChild variant="outline">
-              <Link href="/dashboard">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Link>
-            </Button>
+        {/* Analysis Title */}
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {title}
+              </h1>
+              <p className="text-sm text-gray-600">
+                {analysis.comparison_type === 'full' ? 'Full Analysis' : 'Custom Comparison'} •{' '}
+                {formattedDate} at {formattedTime} ({formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true })})
+              </p>
+            </div>
+            {isCached && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Cached Result
+              </span>
+            )}
           </div>
         </div>
 
         {/* Analysis Content */}
-        <div className="bg-card rounded-lg border shadow-sm p-6">
+        <div className="prose max-w-none">
           <AnalysisResults
             data={analysis.analysis_result}
             timestamp={new Date(analysis.created_at)}
@@ -127,7 +138,7 @@ export default async function AnalysisDetailPage({
         </div>
 
         {/* Print-friendly hint */}
-        <div className="mt-6 text-center text-sm text-muted-foreground print:hidden">
+        <div className="mt-6 text-center text-sm text-gray-500">
           💡 Tip: Use your browser's print function (Cmd/Ctrl + P) to save or print this analysis
         </div>
       </main>

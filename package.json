@@ -19,6 +19,7 @@
     "test:comparison": "tsx src/scripts/test-custom-comparison.ts",
     "test:full-analysis": "tsx src/scripts/test-full-analysis.ts",
     "test:inngest-api": "tsx src/scripts/test-inngest-api.ts",
+    "load:analysis": "tsx src/scripts/load-analysis.ts",
     "scrape": "tsx src/scripts/scrape.ts",
     "scrape:poc": "tsx src/scripts/scrape-poc.ts",
     "scrape:telcos": "tsx src/scripts/scrape-telcos.ts",
@@ -33,6 +34,7 @@
   "description": "Competitive intelligence platform for telecom pricing analysis",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-toast": "^1.2.15",

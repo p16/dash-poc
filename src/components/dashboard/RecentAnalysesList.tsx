@@ -21,10 +21,9 @@ interface Analysis {
 
 interface RecentAnalysesListProps {
   analyses: Analysis[];
-  onSelectAnalysis?: (id: string, brands: string[]) => void;
 }
 
-export function RecentAnalysesList({ analyses, onSelectAnalysis }: RecentAnalysesListProps) {
+export function RecentAnalysesList({ analyses }: RecentAnalysesListProps) {
   const [showAll, setShowAll] = useState(false);
 
   if (analyses.length === 0) {
