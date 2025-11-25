@@ -57,6 +57,16 @@ All analyses are performed on plans scraped within the last 180 days. This means
 - Plan availability may vary based on when they were last scraped
 - Some brands may have fewer plans if they haven't been scraped recently
 
+### Vodafone Scraper Issues
+
+The Vodafone scraper may not work reliably:
+
+- **Scraping Failures**: The Vodafone website structure may have changed, causing the scraper to fail or return incomplete data
+- **Missing Data**: Vodafone plans may be missing or outdated in analyses if the scraper is not functioning
+- **Impact on Comparisons**: Full analyses that include Vodafone may show incomplete results or fail to include Vodafone plans
+
+**Note**: This is a known issue with the web scraping component. Manual verification of Vodafone data availability is recommended before running critical analyses.
+
 ## Browser Compatibility
 
 ### Session Management
