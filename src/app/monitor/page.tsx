@@ -39,7 +39,7 @@ export default function JobMonitorPage() {
       const response = await fetch('/api/events');
       if (response.ok) {
         const data = await response.json();
-        
+
         // First, add all events with empty runs immediately so they show up
         setEventRuns(
           data.events.map((event: any) => ({
@@ -49,7 +49,7 @@ export default function JobMonitorPage() {
             metadata: event.metadata,
           }))
         );
-        
+
         // Then load runs asynchronously in the background
         data.events.forEach((event: any) => {
           addEventRuns(event.event_id, event.event_name, event.metadata);
@@ -71,7 +71,7 @@ export default function JobMonitorPage() {
       const response = await fetch(`/api/jobs/runs?eventId=${eventId}`, {
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
       if (response.ok) {
