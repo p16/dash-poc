@@ -21,6 +21,7 @@ export interface InsertPlanResult {
  *
  * @param source - Telco name (e.g., 'O2', 'Vodafone', 'Smarty')
  * @param planData - Normalized plan data with plan_key
+ * @param scrapeId - Optional Inngest event ID to group plans from same scrape run
  * @returns Inserted plan record
  *
  * @example
@@ -31,12 +32,13 @@ export interface InsertPlanResult {
  *   data_allowance: '10GB',
  *   contract_term: '12 months',
  *   plan_key: 'O2-10GB-12months'
- * });
+ * }, 'event-id-123');
  * ```
  */
 export async function insertPlan(
   source: string,
-  planData: PlanData
+  planData: PlanData,
+  scrapeId?: string
 ): Promise<InsertPlanResult> {
   const pool = getPool();
 
@@ -45,13 +47,13 @@ export async function insertPlan(
     const planKey = (planData as any).plan_key || null;
 
     const result = await pool.query<InsertPlanResult>(
-      `INSERT INTO plans (source, plan_data, plan_key)
-       VALUES ($1, $2, $3)
+      `INSERT INTO plans (source, plan_data, plan_key, scrape_id)
+       VALUES ($1, $2, $3, $4)
        RETURNING id, source, plan_data, scrape_timestamp`,
-      [source, JSON.stringify(planData), planKey]
+      [source, JSON.stringify(planData), planKey, scrapeId || null]
     );
 
-    logger.debug({ source, planId: result.rows[0].id, planKey }, 'Plan inserted');
+    logger.debug({ source, planId: result.rows[0].id, planKey, scrapeId }, 'Plan inserted');
     return result.rows[0];
   } catch (error) {
     logger.error({ source, planData, error }, 'Failed to insert plan');
@@ -64,6 +66,7 @@ export async function insertPlan(
  *
  * @param source - Telco name
  * @param plans - Array of plan data objects
+ * @param scrapeId - Optional Inngest event ID to group plans from same scrape run
  * @returns Array of inserted plan records
  *
  * @example
@@ -71,12 +74,13 @@ export async function insertPlan(
  * await insertPlans('Vodafone', [
  *   { name: 'Plan 1', price: '£10' },
  *   { name: 'Plan 2', price: '£15' }
- * ]);
+ * ], 'event-id-123');
  * ```
  */
 export async function insertPlans(
   source: string,
-  plans: PlanData[]
+  plans: PlanData[],
+  scrapeId?: string
 ): Promise<InsertPlanResult[]> {
   if (plans.length === 0) {
     logger.warn({ source }, 'No plans to insert');
@@ -96,10 +100,10 @@ export async function insertPlans(
       const planKey = (planData as any).plan_key || null;
 
       const result = await client.query<InsertPlanResult>(
-        `INSERT INTO plans (source, plan_data, plan_key)
-         VALUES ($1, $2, $3)
+        `INSERT INTO plans (source, plan_data, plan_key, scrape_id)
+         VALUES ($1, $2, $3, $4)
          RETURNING id, source, plan_data, scrape_timestamp`,
-        [source, JSON.stringify(planData), planKey]
+        [source, JSON.stringify(planData), planKey, scrapeId || null]
       );
 
       results.push(result.rows[0]);
@@ -108,7 +112,7 @@ export async function insertPlans(
     await client.query('COMMIT');
 
     logger.info(
-      { source, planCount: plans.length },
+      { source, planCount: plans.length, scrapeId },
       'Successfully inserted plans'
     );
 

@@ -119,7 +119,7 @@ function transformGiffgaffPlan(plan: GiffgaffPlanRaw): PlanData {
  *
  * @returns Count of plans inserted
  */
-export async function scrapeAndStoreGiffgaffPlans(): Promise<number> {
+export async function scrapeAndStoreGiffgaffPlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Giffgaff plan collection');
 
   const browser = await launchBrowser();
@@ -149,9 +149,9 @@ export async function scrapeAndStoreGiffgaffPlans(): Promise<number> {
     const normalizedPlans = normalizePlans(planData, 'Giffgaff');
 
     // Insert normalized data into database
-    const results = await insertPlans('Giffgaff', normalizedPlans);
+    const results = await insertPlans('Giffgaff', normalizedPlans, scrapeId);
 
-    logger.info({ planCount: results.length }, 'Giffgaff plan collection complete');
+    logger.info({ planCount: results.length, scrapeId }, 'Giffgaff plan collection complete');
     return results.length;
   } catch (error) {
     logger.error({ error }, 'Giffgaff plan collection failed');

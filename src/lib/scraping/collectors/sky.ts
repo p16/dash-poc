@@ -130,7 +130,7 @@ function transformSkyPlan(rawPlan: string[]): PlanData {
  *
  * @returns Number of plans inserted into database
  */
-export async function scrapeAndStoreSkyPlans(): Promise<number> {
+export async function scrapeAndStoreSkyPlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Sky Mobile plan collection');
 
   const browser = await launchBrowser();
@@ -173,10 +173,10 @@ export async function scrapeAndStoreSkyPlans(): Promise<number> {
     const normalizedPlans = normalizePlans(plans, 'Sky');
 
     // Insert normalized data into database
-    await insertPlans('Sky', normalizedPlans);
+    await insertPlans('Sky', normalizedPlans, scrapeId);
 
     logger.info(
-      { planCount: plans.length },
+      { planCount: plans.length, scrapeId },
       'Successfully scraped and stored Sky Mobile plans'
     );
 

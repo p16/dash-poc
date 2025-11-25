@@ -39,7 +39,7 @@ describe('Database Schema', () => {
         ORDER BY ordinal_position;
       `);
 
-      expect(result.rows).toHaveLength(5);
+      expect(result.rows).toHaveLength(6); // Updated from 5 to 6 (added scrape_id)
 
       const columns = result.rows.map((row) => ({
         name: row.column_name,
@@ -52,6 +52,7 @@ describe('Database Schema', () => {
       expect(columns).toContainEqual({ name: 'plan_key', type: 'text', nullable: 'YES' });
       expect(columns).toContainEqual({ name: 'plan_data', type: 'jsonb', nullable: 'NO' });
       expect(columns).toContainEqual({ name: 'scrape_timestamp', type: 'timestamp with time zone', nullable: 'NO' });
+      expect(columns).toContainEqual({ name: 'scrape_id', type: 'text', nullable: 'YES' }); // Added scrape_id
     });
 
     it('should have indexes on scrape_timestamp and source', async () => {
@@ -65,6 +66,7 @@ describe('Database Schema', () => {
       expect(indexNames).toContain('idx_plans_scrape_timestamp');
       expect(indexNames).toContain('idx_plans_source');
       expect(indexNames).toContain('idx_plans_plan_key_timestamp');
+      expect(indexNames).toContain('idx_plans_scrape_id'); // Added scrape_id index
     });
 
     it('should insert plan data with JSONB', async () => {

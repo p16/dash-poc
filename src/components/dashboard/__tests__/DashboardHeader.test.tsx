@@ -13,6 +13,7 @@ vi.mock('next/navigation', () => ({
     push: vi.fn(),
     refresh: vi.fn(),
   }),
+  usePathname: () => '/dashboard',
 }));
 
 // Mock fetch for logout
@@ -25,8 +26,8 @@ describe('DashboardHeader Component', () => {
   it('should render header with title and logout button', () => {
     render(<DashboardHeader />);
 
-    expect(screen.getByText('Competitive Intelligence Dashboard')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
+    expect(screen.getByText('Scrape & Compare')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
   });
 
   it('should call logout API when logout button is clicked', async () => {
@@ -43,7 +44,7 @@ describe('DashboardHeader Component', () => {
 
     render(<DashboardHeader />);
 
-    const logoutButton = screen.getByText('Logout');
+    const logoutButton = screen.getByRole('button', { name: /logout/i });
     fireEvent.click(logoutButton);
 
     expect(global.fetch).toHaveBeenCalledWith('/api/auth/logout', {
@@ -61,7 +62,7 @@ describe('DashboardHeader Component', () => {
   it('should have logout button styled correctly', () => {
     render(<DashboardHeader />);
 
-    const logoutButton = screen.getByText('Logout');
-    expect(logoutButton).toHaveClass('bg-slate-600', 'hover:bg-slate-700');
+    const logoutButton = screen.getByRole('button', { name: /logout/i });
+    expect(logoutButton).toHaveClass('bg-neutral-900', 'hover:bg-neutral-700');
   });
 });

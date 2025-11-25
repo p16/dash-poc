@@ -118,7 +118,7 @@ function transformTescoPlan(rawPlan: TescoRawPlan): PlanData {
  *
  * @returns Number of plans inserted into database
  */
-export async function scrapeAndStoreTescoPlans(): Promise<number> {
+export async function scrapeAndStoreTescoPlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Tesco Mobile plan collection');
 
   const browser = await launchBrowser();
@@ -160,10 +160,10 @@ export async function scrapeAndStoreTescoPlans(): Promise<number> {
     const normalizedPlans = normalizePlans(plans, 'Tesco');
 
     // Insert normalized data into database
-    await insertPlans('Tesco', normalizedPlans);
+    await insertPlans('Tesco', normalizedPlans, scrapeId);
 
     logger.info(
-      { planCount: plans.length },
+      { planCount: plans.length, scrapeId },
       'Successfully scraped and stored Tesco Mobile plans'
     );
 

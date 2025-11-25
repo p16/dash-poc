@@ -219,7 +219,7 @@ function transformVodafonePlan(rawPlan: VodafoneRawPlan): PlanData {
  *
  * @returns Number of plans inserted into database
  */
-export async function scrapeAndStoreVodafonePlans(): Promise<number> {
+export async function scrapeAndStoreVodafonePlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Vodafone plan collection');
 
   const browser = await launchBrowser();
@@ -292,10 +292,10 @@ export async function scrapeAndStoreVodafonePlans(): Promise<number> {
     const normalizedPlans = normalizePlans(plans, 'Vodafone');
 
     // Insert normalized data into database
-    await insertPlans('Vodafone', normalizedPlans);
+    await insertPlans('Vodafone', normalizedPlans, scrapeId);
 
     logger.info(
-      { planCount: plans.length },
+      { planCount: plans.length, scrapeId },
       'Successfully scraped and stored Vodafone plans'
     );
 

@@ -554,7 +554,7 @@ function transformUswitchDeal(deal: UswitchDeal): PlanData {
  *
  * @returns Number of plans inserted into database
  */
-export async function scrapeAndStoreUswitchPlans(): Promise<number> {
+export async function scrapeAndStoreUswitchPlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Uswitch deal collection (GraphQL API)');
 
   try {
@@ -577,10 +577,10 @@ export async function scrapeAndStoreUswitchPlans(): Promise<number> {
     const normalizedPlans = normalizePlans(plans, 'Uswitch');
 
     // Insert normalized data into database
-    await insertPlans('Uswitch', normalizedPlans);
+    await insertPlans('Uswitch', normalizedPlans, scrapeId);
 
     logger.info(
-      { planCount: plans.length },
+      { planCount: plans.length, scrapeId },
       'Successfully scraped and stored Uswitch deals'
     );
 

@@ -238,7 +238,7 @@ function transformThreePlan(rawPlan: ThreePlanRaw): PlanData {
  *
  * @returns Count of plans inserted
  */
-export async function scrapeAndStoreThreePlans(): Promise<number> {
+export async function scrapeAndStoreThreePlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Three plan collection');
 
   const browser = await launchBrowser();
@@ -391,10 +391,10 @@ export async function scrapeAndStoreThreePlans(): Promise<number> {
     const normalizedPlans = normalizePlans(planData, 'Three');
 
     // Insert normalized data into database
-    const results = await insertPlans('Three', normalizedPlans);
-    logger.info({ source: 'Three', planCount: results.length }, 'Successfully inserted plans');
+    const results = await insertPlans('Three', normalizedPlans, scrapeId);
+    logger.info({ source: 'Three', planCount: results.length, scrapeId }, 'Successfully inserted plans');
 
-    logger.info({ planCount: results.length }, 'Three plan collection complete');
+    logger.info({ planCount: results.length, scrapeId }, 'Three plan collection complete');
     return results.length;
   } catch (error) {
     logger.error({ error }, 'Error collecting Three plans');

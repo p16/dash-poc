@@ -150,7 +150,7 @@ function extractPlansInfoFromAPI(
  *
  * @returns Number of plans inserted into database
  */
-export async function scrapeAndStoreSmartyPlans(): Promise<number> {
+export async function scrapeAndStoreSmartyPlans(scrapeId?: string): Promise<number> {
   logger.info('Starting Smarty plan collection (API)');
 
   try {
@@ -171,10 +171,10 @@ export async function scrapeAndStoreSmartyPlans(): Promise<number> {
     const normalizedPlans = normalizePlans(plans, 'Smarty');
 
     // Insert normalized data into database
-    await insertPlans('Smarty', normalizedPlans);
+    await insertPlans('Smarty', normalizedPlans, scrapeId);
 
     logger.info(
-      { planCount: plans.length },
+      { planCount: plans.length, scrapeId },
       'Successfully scraped and stored Smarty plans'
     );
 

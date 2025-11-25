@@ -299,7 +299,7 @@ export async function extractPlanFromLocator(card: any): Promise<O2Plan | null> 
  * console.log(`Stored ${count} O2 plans`);
  * ```
  */
-export async function scrapeAndStoreO2Plans(): Promise<number> {
+export async function scrapeAndStoreO2Plans(scrapeId?: string): Promise<number> {
   logger.info('Starting O2 plan collection');
 
   try {
@@ -319,9 +319,9 @@ export async function scrapeAndStoreO2Plans(): Promise<number> {
     const normalizedPlans = normalizePlans(planData, 'O2');
 
     // Insert normalized data into database
-    const results = await insertPlans('O2', normalizedPlans);
+    const results = await insertPlans('O2', normalizedPlans, scrapeId);
 
-    logger.info({ planCount: results.length }, 'O2 plan collection complete');
+    logger.info({ planCount: results.length, scrapeId }, 'O2 plan collection complete');
     return results.length;
   } catch (error) {
     logger.error({ error }, 'O2 plan collection failed');

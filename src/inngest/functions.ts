@@ -39,6 +39,7 @@ export const scrapeAllPlans = inngest.createFunction(
   { event: 'scrape/trigger' },
   async ({ event, step }) => {
     const startTime = Date.now();
+    const scrapeId = event.id; // Use Inngest event ID to group all plans from this scrape run
     const results: Array<{
       name: string;
       status: 'success' | 'failed';
@@ -47,14 +48,14 @@ export const scrapeAllPlans = inngest.createFunction(
       error?: string;
     }> = [];
 
-    logger.info({ triggeredBy: event.data.triggeredBy }, 'Starting scrape job');
+    logger.info({ triggeredBy: event.data.triggeredBy, scrapeId }, 'Starting scrape job');
 
     // Step 1: Scrape O2
     const o2Result = await step.run('scrape-o2', async () => {
       const stepStart = Date.now();
       try {
         logger.info('Scraping O2...');
-        const plansCollected = await scrapeAndStoreO2Plans();
+        const plansCollected = await scrapeAndStoreO2Plans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'O2 scrape completed');
         return {
@@ -83,7 +84,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Vodafone...');
-        const plansCollected = await scrapeAndStoreVodafonePlans();
+        const plansCollected = await scrapeAndStoreVodafonePlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Vodafone scrape completed');
         return {
@@ -112,7 +113,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Sky...');
-        const plansCollected = await scrapeAndStoreSkyPlans();
+        const plansCollected = await scrapeAndStoreSkyPlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Sky scrape completed');
         return {
@@ -141,7 +142,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Tesco...');
-        const plansCollected = await scrapeAndStoreTescoPlans();
+        const plansCollected = await scrapeAndStoreTescoPlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Tesco scrape completed');
         return {
@@ -170,7 +171,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Three...');
-        const plansCollected = await scrapeAndStoreThreePlans();
+        const plansCollected = await scrapeAndStoreThreePlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Three scrape completed');
         return {
@@ -199,7 +200,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Giffgaff...');
-        const plansCollected = await scrapeAndStoreGiffgaffPlans();
+        const plansCollected = await scrapeAndStoreGiffgaffPlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Giffgaff scrape completed');
         return {
@@ -228,7 +229,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Smarty...');
-        const plansCollected = await scrapeAndStoreSmartyPlans();
+        const plansCollected = await scrapeAndStoreSmartyPlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Smarty scrape completed');
         return {
@@ -257,7 +258,7 @@ export const scrapeAllPlans = inngest.createFunction(
       const stepStart = Date.now();
       try {
         logger.info('Scraping Uswitch...');
-        const plansCollected = await scrapeAndStoreUswitchPlans();
+        const plansCollected = await scrapeAndStoreUswitchPlans(scrapeId);
         const executionTime = Date.now() - stepStart;
         logger.info({ plansCollected, executionTime }, 'Uswitch scrape completed');
         return {
