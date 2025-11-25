@@ -124,7 +124,7 @@ export function CustomComparison({ brands }: Props) {
         // Show toast notification
         toast({
           title: 'Comparison job started!',
-          description: `Comparing ${brandA} vs ${brandB}. This will take 4-5 minutes.`,
+          description: `Comparing ${brandA} vs ${brandB}. This will take 4-5 minutes. Analyzes the most recent plans from the last 180 days.`,
         });
 
         return;
@@ -156,6 +156,9 @@ export function CustomComparison({ brands }: Props) {
         {/* Brand Selector Card */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Select Brands</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Compares the most recent plans from the last 180 days
+          </p>
 
           {/* Brand A Dropdown */}
           <div className="mb-4">

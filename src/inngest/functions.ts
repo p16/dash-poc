@@ -343,7 +343,7 @@ export const runFullAnalysis = inngest.createFunction(
           plan_data,
           scrape_timestamp
         FROM plans
-        WHERE scrape_timestamp > NOW() - INTERVAL '7 days'
+        WHERE scrape_timestamp > NOW() - INTERVAL '180 days'
         ORDER BY source, plan_key, scrape_timestamp DESC
       `;
 
@@ -476,7 +476,7 @@ export const runCustomComparison = inngest.createFunction(
           plan_data,
           scrape_timestamp
         FROM plans
-        WHERE scrape_timestamp > NOW() - INTERVAL '7 days'
+        WHERE scrape_timestamp > NOW() - INTERVAL '180 days'
           AND (source = $1 OR source = $2)
         ORDER BY source, plan_key, scrape_timestamp DESC
       `;

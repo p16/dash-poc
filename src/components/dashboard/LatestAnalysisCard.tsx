@@ -32,6 +32,9 @@ export function LatestAnalysisCard({ analysis }: LatestAnalysisCardProps) {
               Run a full analysis to see O2 vs all competitors here
             </p>
             <p className="text-xs text-neutral-500 mb-4">
+              Analysis uses the most recent plans scraped in the last 180 days
+            </p>
+            <p className="text-xs text-neutral-500 mb-4">
               💡 For brand-specific comparisons, use the{' '}
               <Link href="/dashboard/comparison" className="text-primary underline hover:text-primary/80">
                 Compare Brands

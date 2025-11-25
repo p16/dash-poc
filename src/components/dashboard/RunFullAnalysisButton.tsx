@@ -50,7 +50,7 @@ export function RunFullAnalysisButton() {
         // Show success toast
         toast({
           title: "Analysis started!",
-          description: `Job ID: ${data.jobId}. Takes 4-5 minutes. Track progress on the monitor page.`,
+          description: `Job ID: ${data.jobId}. Takes 4-5 minutes. Analyzes the most recent plans from the last 180 days.`,
         });
       }
 

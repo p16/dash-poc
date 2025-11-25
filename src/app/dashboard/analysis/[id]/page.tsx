@@ -119,6 +119,9 @@ export default async function AnalysisDetailPage({
                 {analysis.comparison_type === 'full' ? 'Full Analysis' : 'Custom Comparison'} •{' '}
                 {formattedDate} at {formattedTime} ({formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true })})
               </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Based on the most recent plans scraped in the last 180 days
+              </p>
             </div>
             {isCached && (
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">

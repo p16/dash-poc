@@ -51,7 +51,7 @@ acceptance_criteria:
       ✅ Database queries implemented for both endpoints
       ✅ Full endpoint query:
          - DISTINCT ON (source, plan_key) for deduplication
-         - 7-day time window filter (NOW() - INTERVAL '7 days')
+         - 180-day time window filter (NOW() - INTERVAL '180 days')
          - Orders by scrape_timestamp DESC for latest data
       ✅ Custom endpoint query:
          - Same DISTINCT ON logic
@@ -285,7 +285,7 @@ integration:
       ✅ SQL queries:
          - DISTINCT ON for deduplication
          - Parameterized queries prevent SQL injection
-         - 7-day time window filter
+         - 180-day time window filter
       ✅ Type-safe query results:
          - pool.query<PlanDataForAnalysis>()
          - Proper TypeScript generics

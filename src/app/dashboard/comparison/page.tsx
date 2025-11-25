@@ -43,6 +43,9 @@ export default async function ComparisonPage() {
           <p className="mt-2 text-gray-600">
             Compare two mobile network brands side-by-side with AI-powered competitive analysis
           </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Analysis uses the most recent plans scraped in the last 180 days
+          </p>
         </div>
 
         <CustomComparison brands={brands} />

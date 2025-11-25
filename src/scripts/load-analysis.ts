@@ -19,7 +19,7 @@ async function loadAnalyses() {
     console.log('Fetching all analyses from database...\n');
 
     const result = await pool.query(`
-      SELECT 
+      SELECT
         id,
         comparison_type,
         brands,

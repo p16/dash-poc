@@ -38,7 +38,7 @@ async function testFullAnalysisWorkflow() {
         plan_data,
         scrape_timestamp
       FROM plans
-      WHERE scrape_timestamp > NOW() - INTERVAL '7 days'
+      WHERE scrape_timestamp > NOW() - INTERVAL '180 days'
       ORDER BY source, plan_key, scrape_timestamp DESC
     `;
 
