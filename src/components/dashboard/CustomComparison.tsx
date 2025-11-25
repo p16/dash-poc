@@ -57,6 +57,7 @@ export function CustomComparison({ brands }: Props) {
   const [state, setState] = useState<ComparisonState>({ status: 'idle' });
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [showAllAnalyses, setShowAllAnalyses] = useState(false);
+  const [isLoadingAnalyses, setIsLoadingAnalyses] = useState(true);
 
   useEffect(() => {
     loadAnalyses();
@@ -64,6 +65,7 @@ export function CustomComparison({ brands }: Props) {
 
   const loadAnalyses = async () => {
     try {
+      setIsLoadingAnalyses(true);
       const response = await fetch('/api/analysis?limit=10&comparisonType=custom');
       if (response.ok) {
         const data = await response.json();
@@ -71,20 +73,22 @@ export function CustomComparison({ brands }: Props) {
       }
     } catch (error) {
       console.error('Error loading analyses:', error);
+    } finally {
+      setIsLoadingAnalyses(false);
     }
   };
 
   const loadAnalysisById = async (id: string) => {
     try {
       setState({ status: 'loading' });
-      
+
       const response = await fetch(`/api/analysis/${id}`);
       if (!response.ok) {
         throw new Error('Failed to load analysis');
       }
 
       const analysis = await response.json();
-      
+
       setState({
         status: 'success',
         data: analysis.analysisResult,
@@ -275,7 +279,18 @@ export function CustomComparison({ brands }: Props) {
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold mb-4">Recent Analyses</h2>
 
-          {analyses.length === 0 ? (
+          {isLoadingAnalyses ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border-b border-gray-200 pb-3 last:border-0">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : analyses.length === 0 ? (
             <p className="text-sm text-gray-500">No recent comparisons</p>
           ) : (
             <>
