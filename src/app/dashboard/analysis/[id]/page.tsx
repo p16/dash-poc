@@ -12,6 +12,7 @@ import { requireAuth } from '@/lib/auth/session';
 import { getPool } from '@/lib/db/connection';
 import { AnalysisResults } from '@/components/analysis/AnalysisResults';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { RunFullAnalysisButton } from '@/components/dashboard/RunFullAnalysisButton';
 import { formatDistanceToNow } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
@@ -100,12 +101,16 @@ export default async function AnalysisDetailPage({
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </Link>
-          <Link
-            href="/dashboard/comparison"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
-          >
-            Run New Comparison
-          </Link>
+          {analysis.comparison_type === 'full' ? (
+            <RunFullAnalysisButton />
+          ) : (
+            <Link
+              href="/dashboard/comparison"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            >
+              Run New Comparison
+            </Link>
+          )}
         </div>
 
         {/* Analysis Title */}

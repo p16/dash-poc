@@ -35,6 +35,7 @@ export function DashboardHeader() {
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Compare', href: '/dashboard/comparison' },
     { label: 'Plans', href: '/dashboard/plans' },
+    { label: 'Jobs', href: '/monitor' },
   ];
 
   return (

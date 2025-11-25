@@ -1,16 +1,13 @@
-/**
- * Inngest Job Monitor Page
- *
- * Visual interface to trigger and monitor Inngest jobs.
- * Shows real-time job status, database writes, and flow visualization.
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
-import { useInngestJob } from '@/hooks/useInngestJob';
+import { ChevronRight, RefreshCw, Clock, CheckCircle2, XCircle, Loader2, AlertCircle } from 'lucide-react';
+import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Run {
   id: string;
@@ -24,80 +21,93 @@ interface EventRuns {
   eventId: string;
   eventName: string;
   runs: Run[];
+  metadata?: Record<string, any>;
 }
 
-export default function InngestMonitorPage() {
-  const [customBrandA, setCustomBrandA] = useState('O2');
-  const [customBrandB, setCustomBrandB] = useState('Vodafone');
+export default function JobMonitorPage() {
   const [eventRuns, setEventRuns] = useState<EventRuns[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { trigger, loading: jobLoading } = useInngestJob();
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load events from database on mount
   useEffect(() => {
     loadEventsFromDatabase();
   }, []);
 
   const loadEventsFromDatabase = async () => {
     try {
-      console.warn('Loading events from database...');
+      setIsLoading(true);
       const response = await fetch('/api/events');
       if (response.ok) {
         const data = await response.json();
-        console.warn('Events from database:', data.events);
-        // Load runs for each stored event
-        for (const event of data.events) {
-          console.warn('Fetching runs for event:', event.event_id, event.event_name);
-          await addEventRuns(event.event_id, event.event_name);
-        }
-      } else {
-        console.error('Failed to load events:', response.status, await response.text());
+        
+        // First, add all events with empty runs immediately so they show up
+        setEventRuns(
+          data.events.map((event: any) => ({
+            eventId: event.event_id,
+            eventName: event.event_name,
+            runs: [],
+            metadata: event.metadata,
+          }))
+        );
+        
+        // Then load runs asynchronously in the background
+        data.events.forEach((event: any) => {
+          addEventRuns(event.event_id, event.event_name, event.metadata);
+        });
       }
     } catch (error) {
       console.error('Error loading events:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Determine if we're in development (localhost) or production (Vercel)
-  const isDevelopment = typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
-  // Inngest dashboard URL for reference (dev vs prod)
-  const _inngestDashboardUrl = isDevelopment
-    ? 'http://localhost:8288'
-    : 'https://app.inngest.com';
-
-  const addEventRuns = async (eventId: string, eventName: string) => {
+  const addEventRuns = async (eventId: string, eventName: string, metadata?: Record<string, any>) => {
     try {
-      console.warn('Fetching runs for:', eventId);
-      const response = await fetch(`/api/jobs/runs?eventId=${eventId}`);
-      console.warn('Response status:', response.status);
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(`/api/jobs/runs?eventId=${eventId}`, {
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const data = await response.json();
-        console.warn('Runs data:', data);
         setEventRuns(prev => {
-          // Remove existing entry for this eventId if any
           const filtered = prev.filter(e => e.eventId !== eventId);
-          const newState = [...filtered, { eventId, eventName, runs: data.runs || [] }];
-          console.warn('Updated eventRuns state:', newState);
-          return newState;
+          return [...filtered, { eventId, eventName, runs: data.runs || [], metadata }];
         });
       } else {
-        const errorText = await response.text();
-        console.error('Failed to fetch runs:', response.status, errorText);
+        console.warn(`Failed to fetch runs for event ${eventId}:`, response.status);
+        // Still add the event with empty runs so it shows up
+        setEventRuns(prev => {
+          const filtered = prev.filter(e => e.eventId !== eventId);
+          return [...filtered, { eventId, eventName, runs: [], metadata }];
+        });
       }
     } catch (error) {
-      console.error('Error fetching runs:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`Timeout fetching runs for event ${eventId}`);
+      } else {
+        console.error('Error fetching runs:', error);
+      }
+      // Add event with empty runs even on error
+      setEventRuns(prev => {
+        const filtered = prev.filter(e => e.eventId !== eventId);
+        return [...filtered, { eventId, eventName, runs: [], metadata }];
+      });
     }
   };
 
   const refreshAllRuns = async () => {
     setIsRefreshing(true);
     try {
-      // Refresh runs for all tracked events
       await Promise.all(
         eventRuns.map(event =>
-          addEventRuns(event.eventId, event.eventName)
+          addEventRuns(event.eventId, event.eventName, event.metadata)
         )
       );
     } finally {
@@ -105,245 +115,198 @@ export default function InngestMonitorPage() {
     }
   };
 
-  async function triggerScrape() {
-    const eventId = await trigger({
-      apiEndpoint: '/api/test-scrape',
-      eventName: 'scrape/trigger',
-    });
-
-    if (eventId) {
-      await addEventRuns(eventId, 'scrape/trigger');
-      alert(`✅ Scrape job started!\nEvent ID: ${eventId}`);
+  const getStatusIcon = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      case 'running':
+        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
     }
-  }
+  };
 
-  async function triggerFullAnalysis() {
-    const eventId = await trigger({
-      apiEndpoint: '/api/analysis/full',
-      eventName: 'analysis/full',
-    });
-
-    if (eventId) {
-      await addEventRuns(eventId, 'analysis/full');
-      alert(`✅ Full analysis job started!\nEvent ID: ${eventId}`);
+  const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'destructive' => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'default';
+      case 'running':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'secondary';
     }
-  }
+  };
 
-  async function triggerCustomComparison() {
-    const eventId = await trigger({
-      apiEndpoint: '/api/analysis/custom',
-      eventName: 'analysis/custom',
-      body: { brandA: customBrandA, brandB: customBrandB },
-      metadata: { brandA: customBrandA, brandB: customBrandB },
-    });
-
-    if (eventId) {
-      await addEventRuns(eventId, 'analysis/custom');
-      alert(`✅ Custom comparison job started!\nEvent ID: ${eventId}\nComparing: ${customBrandA} vs ${customBrandB}`);
+  const getEventTypeLabel = (eventName: string, metadata?: Record<string, any>) => {
+    switch (eventName) {
+      case 'scrape/trigger':
+        return '🕷️ Data Scrape';
+      case 'analysis/full':
+        return '📈 Full Analysis';
+      case 'analysis/custom':
+        if (metadata?.brandA && metadata?.brandB) {
+          return `⚖️ ${metadata.brandA} vs ${metadata.brandB}`;
+        }
+        return '⚖️ Custom Comparison';
+      default:
+        return eventName;
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <Link
-                  href="/dashboard"
-                  className="text-blue-600 hover:text-blue-700"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Link>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  🔍 Inngest Job Monitor
-                </h1>
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+          <Link href="/dashboard" className="hover:text-gray-900">
+            Dashboard
+          </Link>
+          <ChevronRight className="w-4 h-4" />
+          <span className="text-gray-900 font-medium">Job Monitor</span>
+        </nav>
+
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Job Monitor</h1>
+          <p className="mt-2 text-gray-600">
+            Track the status of all background jobs including scrapes and analyses
+          </p>
+        </div>
+
+        <div className="flex justify-end mb-6">
+          <Button
+            onClick={refreshAllRuns}
+            disabled={isRefreshing || isLoading}
+            variant="outline"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? 'Refreshing...' : 'Refresh Status'}
+          </Button>
+        </div>
+
+        {isLoading && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
+                <p className="text-sm text-gray-600">Loading jobs...</p>
               </div>
-              <p className="text-gray-600">
-                Trigger jobs and see how data flows from browser → Inngest → Database
-              </p>
-            </div>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm font-medium"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Main Dashboard
-            </Link>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Job Triggers */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {/* Scrape */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-2">🕷️ Scrape Plans</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Scrapes all 8 providers and saves to database
-            </p>
-            <button
-              onClick={triggerScrape}
-              disabled={jobLoading}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {jobLoading ? 'Starting...' : 'Trigger Scrape'}
-            </button>
-            <div className="mt-3 text-xs text-gray-500">
-              ⏱️ ~10 minutes<br />
-              💾 Writes to: <code>plans</code> table
-            </div>
-          </div>
+        {!isLoading && eventRuns.length === 0 && (
+          <Card>
+            <CardContent className="py-12">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Jobs will appear here after you run scrapes or analyses
+                </p>
+                <Link href="/dashboard">
+                  <Button variant="outline">Go to Dashboard</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Full Analysis */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-2">📈 Full Analysis</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Analyzes all brands using Gemini AI
-            </p>
-            <button
-              onClick={triggerFullAnalysis}
-              disabled={jobLoading}
-              className="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {jobLoading ? 'Starting...' : 'Trigger Analysis'}
-            </button>
-            <div className="mt-3 text-xs text-gray-500">
-              ⏱️ ~4-5 minutes<br />
-              📖 Reads: <code>plans</code> table<br />
-              💾 Writes: <code>analyses</code> table
-            </div>
-          </div>
-
-          {/* Custom Comparison */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-2">⚖️ Custom Comparison</h3>
-            <div className="space-y-2 mb-4">
-              <select
-                value={customBrandA}
-                onChange={(e) => setCustomBrandA(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="O2">O2</option>
-                <option value="Vodafone">Vodafone</option>
-                <option value="Sky">Sky</option>
-                <option value="Tesco">Tesco</option>
-                <option value="Three">Three</option>
-                <option value="Giffgaff">Giffgaff</option>
-                <option value="Smarty">Smarty</option>
-              </select>
-              <select
-                value={customBrandB}
-                onChange={(e) => setCustomBrandB(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-              >
-                <option value="Vodafone">Vodafone</option>
-                <option value="O2">O2</option>
-                <option value="Sky">Sky</option>
-                <option value="Tesco">Tesco</option>
-                <option value="Three">Three</option>
-                <option value="Giffgaff">Giffgaff</option>
-                <option value="Smarty">Smarty</option>
-              </select>
-            </div>
-            <button
-              onClick={triggerCustomComparison}
-              disabled={jobLoading}
-              className="w-full bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              {jobLoading ? 'Starting...' : 'Compare Brands'}
-            </button>
-            <div className="mt-3 text-xs text-gray-500">
-              ⏱️ ~4-5 minutes<br />
-              📖 Reads: <code>plans</code> table<br />
-              💾 Writes: <code>analyses</code> table
-            </div>
-          </div>
-        </div>
-
-        {/* Event Runs List */}
-        {eventRuns.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">📋 Tracked Runs</h2>
-              <button
-                onClick={refreshAllRuns}
-                disabled={isRefreshing}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 text-sm"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {eventRuns.map((event, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-md p-4">
-                  <div className="mb-3">
-                    <span className="font-semibold text-gray-900">
-                      {event.eventName === 'scrape/trigger' && '🕷️ Scrape Event'}
-                      {event.eventName === 'analysis/full' && '📈 Full Analysis Event'}
-                      {event.eventName === 'analysis/custom' && '⚖️ Custom Comparison Event'}
-                    </span>
-                    <p className="text-xs text-gray-500 mt-1">Event ID: {event.eventId}</p>
+        {!isLoading && eventRuns.length > 0 && (
+          <div className="space-y-4">
+            {eventRuns.map((event) => (
+              <Card key={event.eventId}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">
+                        {getEventTypeLabel(event.eventName, event.metadata)}
+                      </CardTitle>
+                      <CardDescription className="text-xs mt-1">
+                        Event ID: {event.eventId}
+                      </CardDescription>
+                    </div>
+                    {event.runs.length > 0 && (
+                      <Badge variant={getStatusBadgeVariant(event.runs[0].status)} className="ml-4">
+                        {getStatusIcon(event.runs[0].status)}
+                        <span className="ml-1.5">{event.runs[0].status}</span>
+                      </Badge>
+                    )}
                   </div>
-
+                </CardHeader>
+                <CardContent>
                   {event.runs.length === 0 ? (
-                    isDevelopment ? (
-                      <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                        <p className="text-sm text-blue-800 font-medium mb-1">
-                          ℹ️ Development Mode
-                        </p>
-                        <p className="text-xs text-blue-700">
-                          Run status tracking requires INNGEST_SIGNING_KEY for production.
-                          <br />
-                          Check job status at:{' '}
-                          <a
-                            href="http://localhost:8288/runs"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline hover:text-blue-900"
-                          >
-                            http://localhost:8288/runs
-                          </a>
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500 italic">No runs yet - check back in a moment</p>
-                    )
+                    <div className="flex items-center gap-2 text-sm text-gray-500 italic">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading status...</span>
+                    </div>
                   ) : (
-                    <div className="space-y-2">
-                      {event.runs.map((run, runIdx) => (
-                        <div key={runIdx} className="bg-gray-50 rounded p-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-mono text-gray-700">{run.function_id}</span>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                              run.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                              run.status === 'Running' ? 'bg-blue-100 text-blue-800' :
-                              run.status === 'Failed' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {run.status}
-                            </span>
+                    <div className="space-y-3">
+                      {event.runs.map((run) => (
+                        <div
+                          key={run.id}
+                          className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <div className="font-mono text-xs text-gray-700 mb-1">
+                                {run.function_id}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Run ID: {run.id}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(run.status)}
+                              <span className="text-sm font-medium text-gray-900">
+                                {run.status}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-600">
-                            Run ID: {run.id}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Started: {new Date(run.started_at).toLocaleString()}
-                            {run.ended_at && ` • Ended: ${new Date(run.ended_at).toLocaleString()}`}
+                          <div className="flex items-center gap-4 text-xs text-gray-600 mt-3">
+                            {run.started_at && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span>
+                                  Started {(() => {
+                                    try {
+                                      return formatDistanceToNow(new Date(run.started_at), { addSuffix: true });
+                                    } catch {
+                                      return run.started_at;
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                            )}
+                            {run.ended_at && (
+                              <div className="flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                <span>
+                                  Ended {(() => {
+                                    try {
+                                      return formatDistanceToNow(new Date(run.ended_at), { addSuffix: true });
+                                    } catch {
+                                      return run.ended_at;
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
