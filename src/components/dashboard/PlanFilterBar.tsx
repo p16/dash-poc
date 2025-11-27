@@ -60,12 +60,12 @@ export function PlanFilterBar({
   const hasActiveFilters = brandFilter !== 'all' || dataFilter !== 'all' || priceFilter !== 'all';
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-4">
+    <div className="bg-card rounded-lg shadow p-6 space-y-4">
       {/* Filters Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Brand Filter */}
         <div>
-          <label htmlFor="brand-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="brand-filter" className="block text-sm font-medium text-foreground mb-2">
             Brand
           </label>
           <Select value={brandFilter} onValueChange={onBrandChange}>
@@ -85,7 +85,7 @@ export function PlanFilterBar({
 
         {/* Data Allowance Filter */}
         <div>
-          <label htmlFor="data-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="data-filter" className="block text-sm font-medium text-foreground mb-2">
             Data Allowance
           </label>
           <Select value={dataFilter} onValueChange={onDataChange}>
@@ -104,7 +104,7 @@ export function PlanFilterBar({
 
         {/* Price Range Filter */}
         <div>
-          <label htmlFor="price-filter" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="price-filter" className="block text-sm font-medium text-foreground mb-2">
             Price Range
           </label>
           <Select value={priceFilter} onValueChange={onPriceChange}>
@@ -140,7 +140,7 @@ export function PlanFilterBar({
       </div>
 
       {/* Results Count */}
-      <div className="text-sm text-gray-600">
+      <div className="text-sm text-muted-foreground">
         Showing <span className="font-semibold">{filteredCount}</span>
         {filteredCount !== totalCount && ` of ${totalCount}`} plan{filteredCount !== 1 ? 's' : ''}
       </div>

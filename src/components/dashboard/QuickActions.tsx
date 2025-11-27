@@ -53,30 +53,30 @@ export function QuickActions() {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Quick Actions</h2>
+    <div className="bg-card border rounded-lg p-6">
+      <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="mb-4 bg-destructive/10 border border-destructive/20 rounded-lg p-4">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-red-800">{error}</p>
+            <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         </div>
       )}
 
       {jobId && (
-        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm text-green-800 font-medium">Analysis job started!</p>
-              <p className="text-xs text-green-700 mt-1">
-                Job ID: <code className="bg-green-100 px-1 rounded">{jobId}</code>
+              <p className="text-sm text-emerald-800 dark:text-emerald-200 font-medium">Analysis job started!</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                Job ID: <code className="bg-emerald-100 dark:bg-emerald-900 px-1 rounded">{jobId}</code>
               </p>
-              <p className="text-xs text-green-700 mt-2">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-2">
                 This will take 4-5 minutes. Check the{' '}
-                <Link href="/monitor" className="underline font-medium hover:text-green-800">
+                <Link href="/monitor" className="underline font-medium hover:text-emerald-900 dark:hover:text-emerald-100">
                   monitor page
                 </Link>{' '}
                 to track progress, or refresh this page in a few minutes.
@@ -91,7 +91,7 @@ export function QuickActions() {
         <button
           onClick={handleRunFullAnalysis}
           disabled={isRunning}
-          className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 disabled:bg-primary/50 text-primary-foreground font-medium py-3 px-6 rounded-lg transition-colors"
         >
           {isRunning ? (
             <>
@@ -109,7 +109,7 @@ export function QuickActions() {
         {/* Custom Comparison Link */}
         <Link
           href="/dashboard/comparison"
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-3 px-6 rounded-lg transition-colors"
         >
           <GitCompare className="h-5 w-5" />
           Custom Comparison
@@ -118,20 +118,20 @@ export function QuickActions() {
         {/* Browse Plans Link */}
         <Link
           href="/dashboard/plans"
-          className="flex-1 flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium py-3 px-6 rounded-lg transition-colors"
         >
           <Table className="h-5 w-5" />
           Browse Plans
         </Link>
       </div>
 
-      <div className="mt-3 flex items-start gap-2 text-xs text-slate-500">
+      <div className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
         <div className="flex-1">
           <p>💡 Analysis runs in the background (4-5 minutes)</p>
         </div>
         <Link
           href="/monitor"
-          className="flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+          className="flex items-center gap-1 text-primary hover:text-primary/80 font-medium"
         >
           <ExternalLink className="h-3 w-3" />
           Monitor jobs

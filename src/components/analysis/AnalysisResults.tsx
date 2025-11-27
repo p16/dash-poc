@@ -9,6 +9,9 @@ import {
   DollarSign,
   Package,
   Target,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import type { AnalysisData, CustomComparisonAnalysis } from '@/types/analysis';
 
@@ -35,17 +38,16 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
     });
   };
 
-  // Helper for competitiveness score (higher is worse for the brand being analyzed)
-  const getCompetitivenessColor = (score: number) => {
-    if (score >= 70) return 'text-red-700 bg-red-50';
-    if (score >= 40) return 'text-yellow-700 bg-yellow-50';
-    return 'text-green-700 bg-green-50';
+  const getCompetitivenessIcon = (score: number) => {
+    if (score >= 80) return <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />;
+    if (score >= 50) return <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />;
+    return <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />;
   };
 
   return (
     <div className="space-y-6">
       {/* Metadata */}
-      <div className="bg-slate-50 rounded-lg p-4 text-sm text-slate-600">
+      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-4">
           <span>
             <strong>Generated:</strong>{' '}
@@ -70,9 +72,9 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
 
       {/* Overall Competitive Sentiments */}
             {/* Competitive Sentiments */}
-      <div className="bg-white border border-slate-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-slate-900 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-green-600" />
+      <div className="bg-card border rounded-lg p-6">
+        <h2 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           Competitive Insights
         </h2>
         {data?.overall_competitive_sentiments && data.overall_competitive_sentiments.length > 0 ? (
@@ -80,22 +82,25 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
             {data.overall_competitive_sentiments.map((sentiment, idx) => (
               <div
                 key={idx}
-                className={`p-4 rounded-lg border-2 ${getCompetitivenessColor(
-                  sentiment?.score || 0
-                )}`}
+                className="p-4 rounded-lg text-foreground bg-muted border"
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold">{sentiment?.sentiment || 'N/A'}</h3>
-                  <span className="text-sm font-medium px-2 py-1 rounded bg-white/50">
-                    Score: {sentiment?.score ?? 'N/A'}
-                  </span>
+                <div className="flex items-start gap-3 mb-2">
+                  {getCompetitivenessIcon(sentiment?.score || 0)}
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-semibold">{sentiment?.sentiment || 'N/A'}</h3>
+                      <span className="text-sm font-medium px-2 py-1 rounded bg-background/50">
+                        Score: {sentiment?.score ?? 'N/A'}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-relaxed mt-2">{sentiment?.rationale || 'N/A'}</p>
+                  </div>
                 </div>
-                <p className="text-sm leading-relaxed">{sentiment?.rationale || 'N/A'}</p>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-500 italic">No competitive insights available</p>
+          <p className="text-muted-foreground italic">No competitive insights available</p>
         )}
       </div>
 
@@ -108,19 +113,19 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
           return (
             <div
               key={idx}
-              className="bg-white border border-slate-200 rounded-lg overflow-hidden"
+              className="bg-card border rounded-lg overflow-hidden"
             >
             <button
               onClick={() => toggleSection(sectionKey)}
-              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-accent transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Package className="h-5 w-5 text-purple-600" />
+                <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div className="text-left">
-                  <h2 className="text-lg font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {product?.product_name || 'Unknown Product'}
                   </h2>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     {product?.data_tier || 'N/A'} | {product?.roaming_tier || 'N/A'} |{' '}
                     {product?.product_breakdown?.price_per_month_GBP !== null &&
                     product?.product_breakdown?.price_per_month_GBP !== undefined
@@ -130,46 +135,42 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 </div>
               </div>
               {isExpanded ? (
-                <ChevronUp className="h-5 w-5 text-slate-400" />
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-slate-400" />
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
               )}
             </button>
 
             {isExpanded && (
               <div className="p-4 pt-0 space-y-4">
                 {/* O2 Product Breakdown */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
                     O2 Product Details
                   </h3>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
-                      <span className="text-blue-700 font-medium">Data:</span>{' '}
+                      <span className="text-primary font-medium">Data:</span>{' '}
                       {product.product_breakdown.data}
                     </div>
                     <div>
-                      <span className="text-blue-700 font-medium">Contract:</span>{' '}
+                      <span className="text-primary font-medium">Contract:</span>{' '}
                       {product.product_breakdown.contract}
                     </div>
                     <div>
-                      <span className="text-blue-700 font-medium">Roaming:</span>{' '}
+                      <span className="text-primary font-medium">Roaming:</span>{' '}
                       {product.product_breakdown.roaming}
                     </div>
                     <div>
-                      <span className="text-blue-700 font-medium">Extras:</span>{' '}
+                      <span className="text-primary font-medium">Extras:</span>{' '}
                       {product.product_breakdown.extras || 'None'}
                     </div>
                     <div className="col-span-2">
-                      <span className="text-blue-700 font-medium">
+                      <span className="text-primary font-medium">
                         Competitiveness Score:
                       </span>{' '}
-                      <span
-                        className={`font-bold px-2 py-1 rounded ${getCompetitivenessColor(
-                          product.product_breakdown.competitiveness_score
-                        )}`}
-                      >
+                      <span className="font-bold px-2 py-1 rounded text-foreground bg-muted border">
                         {product.product_breakdown.competitiveness_score}/100
                       </span>
                     </div>
@@ -179,13 +180,13 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Strategic Insights */}
                 {product.o2_product_sentiments.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       Strategic Insights
                     </h3>
-                    <ul className="space-y-1 text-sm text-slate-700">
+                    <ul className="space-y-1 text-sm text-foreground">
                       {product.o2_product_sentiments.map((sentiment, sidx) => (
                         <li key={sidx} className="flex items-start gap-2">
-                          <TrendingUp className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <TrendingUp className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                           <span>{sentiment}</span>
                         </li>
                       ))}
@@ -196,13 +197,13 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Recommended Changes */}
                 {product.o2_product_changes.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       Recommended Changes
                     </h3>
-                    <ul className="space-y-1 text-sm text-slate-700">
+                    <ul className="space-y-1 text-sm text-foreground">
                       {product.o2_product_changes.map((change, cidx) => (
                         <li key={cidx} className="flex items-start gap-2">
-                          <TrendingDown className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                          <TrendingDown className="h-4 w-4 text-orange-500 dark:text-orange-400 mt-0.5 flex-shrink-0" />
                           <span>{change}</span>
                         </li>
                       ))}
@@ -212,18 +213,18 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
 
                 {/* Price Suggestions */}
                 {product.price_suggestions.length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
+                  <div className="bg-primary/5 border-2 border-primary/30 rounded-lg p-4">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-primary" />
                       Price Recommendations
                     </h3>
                     <div className="space-y-2">
                       {product.price_suggestions.map((suggestion, pidx) => (
                         <div key={pidx} className="text-sm">
-                          <div className="font-medium text-green-900">
+                          <div className="font-medium text-foreground">
                             Suggested Price: {suggestion.price}
                           </div>
-                          <div className="text-green-700">{suggestion.motivation}</div>
+                          <div className="text-muted-foreground">{suggestion.motivation}</div>
                         </div>
                       ))}
                     </div>
@@ -233,33 +234,33 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Comparable Products */}
                 {product.comparable_products.length > 0 && (
                   <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">
+                    <h3 className="font-semibold text-foreground mb-2">
                       Comparable Products ({product.comparable_products.length})
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
-                        <thead className="bg-slate-100">
+                        <thead className="bg-muted/50">
                           <tr>
-                            <th className="px-3 py-2 text-left font-medium text-slate-700">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
                               Brand
                             </th>
-                            <th className="px-3 py-2 text-left font-medium text-slate-700">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
                               Data
                             </th>
-                            <th className="px-3 py-2 text-left font-medium text-slate-700">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
                               Contract
                             </th>
-                            <th className="px-3 py-2 text-left font-medium text-slate-700">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
                               Price
                             </th>
-                            <th className="px-3 py-2 text-left font-medium text-slate-700">
+                            <th className="px-3 py-2 text-left font-medium text-muted-foreground">
                               Score
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-200">
+                        <tbody className="divide-y divide-border">
                           {product.comparable_products.map((comp, cpidx) => (
-                            <tr key={cpidx} className="hover:bg-slate-50">
+                            <tr key={cpidx} className="hover:bg-accent">
                               <td className="px-3 py-2 font-medium">{comp.brand}</td>
                               <td className="px-3 py-2">{comp.data}</td>
                               <td className="px-3 py-2">{comp.contract}</td>
@@ -269,11 +270,7 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                                   : 'Unknown'}
                               </td>
                               <td className="px-3 py-2">
-                                <span
-                                  className={`px-2 py-1 rounded text-xs font-medium ${getCompetitivenessColor(
-                                    comp.competitiveness_score
-                                  )}`}
-                                >
+                                <span className="px-2 py-1 rounded text-xs font-medium text-foreground bg-muted border">
                                   {comp.competitiveness_score}
                                 </span>
                               </td>
@@ -297,36 +294,36 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
           return (
             <div
               key={idx}
-              className="bg-white border border-slate-200 rounded-lg overflow-hidden"
+              className="bg-card border rounded-lg overflow-hidden"
             >
             <button
               onClick={() => toggleSection(sectionKey)}
-              className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-accent transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Package className="h-5 w-5 text-purple-600" />
+                <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <div className="text-left">
-                  <h2 className="text-lg font-semibold text-slate-900">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {product?.product_name || 'Unknown Product'}
                   </h2>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     {product?.product_breakdown?.data || 'N/A'} • £{product?.product_breakdown?.price_per_month_GBP ?? 'N/A'}
                   </p>
                 </div>
               </div>
               {isExpanded ? (
-                <ChevronUp className="h-5 w-5 text-slate-400" />
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-slate-400" />
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
               )}
             </button>
 
             {isExpanded && (
-              <div className="p-6 pt-2 border-t border-slate-100 space-y-6">
+              <div className="p-6 pt-2 border-t border-border space-y-6">
                 {/* Product Sentiments */}
                 {product.brand_a_product_sentiments && product.brand_a_product_sentiments.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                       <TrendingUp className="h-4 w-4" />
                       Competitive Insights
                     </h3>
@@ -334,9 +331,9 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                       {product.brand_a_product_sentiments.map((sentiment, sidx) => (
                         <div
                           key={sidx}
-                          className="p-3 rounded-lg border-2 bg-slate-50 border-slate-200"
+                          className="p-3 rounded-lg border-2 bg-muted/50 border-border"
                         >
-                          <p className="text-sm leading-relaxed text-slate-700">{sentiment}</p>
+                          <p className="text-sm leading-relaxed text-foreground">{sentiment}</p>
                         </div>
                       ))}
                     </div>
@@ -346,14 +343,14 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Product Changes */}
                 {product.brand_a_product_changes && product.brand_a_product_changes.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                       <Target className="h-4 w-4" />
                       Recommended Changes
                     </h3>
                     <div className="space-y-2">
                       {product.brand_a_product_changes.map((change, cidx) => (
-                        <div key={cidx} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                          <p className="text-sm text-blue-900">{change}</p>
+                        <div key={cidx} className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                          <p className="text-sm text-foreground">{change}</p>
                         </div>
                       ))}
                     </div>
@@ -363,22 +360,22 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Price Suggestions */}
                 {product.price_suggestions && product.price_suggestions.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
+                    <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-primary" />
                       Pricing Strategy
                     </h3>
                     <div className="space-y-2">
                       {product.price_suggestions.map((suggestion, pidx) => (
-                        <div key={pidx} className="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <div key={pidx} className="bg-primary/5 border-2 border-primary/30 rounded-lg p-3">
                           <div className="flex justify-between items-start">
-                            <span className="text-sm font-medium text-green-900">
+                            <span className="text-sm font-medium text-foreground">
                               Suggested Price
                             </span>
-                            <span className="text-sm font-bold text-green-900">
+                            <span className="text-sm font-bold text-primary">
                               £{suggestion?.price ?? 'N/A'}
                             </span>
                           </div>
-                          <p className="text-xs text-green-700 mt-1">{suggestion?.motivation || 'N/A'}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{suggestion?.motivation || 'N/A'}</p>
                         </div>
                       ))}
                     </div>
@@ -388,30 +385,30 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                 {/* Comparable Products Table */}
                 {product.comparable_products && product.comparable_products.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                    <h3 className="text-sm font-semibold text-foreground mb-3">
                       Comparable Products
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-slate-200 bg-slate-50">
-                            <th className="text-left p-2 font-medium text-slate-700">Company</th>
-                            <th className="text-left p-2 font-medium text-slate-700">Plan</th>
-                            <th className="text-left p-2 font-medium text-slate-700">Data</th>
-                            <th className="text-right p-2 font-medium text-slate-700">Price</th>
-                            <th className="text-left p-2 font-medium text-slate-700">Contract</th>
-                            <th className="text-left p-2 font-medium text-slate-700">Notes</th>
+                          <tr className="border-b border-border bg-muted/50">
+                            <th className="text-left p-2 font-medium text-muted-foreground">Company</th>
+                            <th className="text-left p-2 font-medium text-muted-foreground">Plan</th>
+                            <th className="text-left p-2 font-medium text-muted-foreground">Data</th>
+                            <th className="text-right p-2 font-medium text-muted-foreground">Price</th>
+                            <th className="text-left p-2 font-medium text-muted-foreground">Contract</th>
+                            <th className="text-left p-2 font-medium text-muted-foreground">Notes</th>
                           </tr>
                         </thead>
                         <tbody>
                           {product.comparable_products.map((comp, cpidx) => (
-                            <tr key={cpidx} className="border-b border-slate-100">
+                            <tr key={cpidx} className="border-b border-border">
                               <td className="p-2 font-medium">{comp?.brand || 'N/A'}</td>
                               <td className="p-2">{comp?.brand || 'N/A'}</td>
                               <td className="p-2">{comp?.data || 'N/A'}</td>
                               <td className="p-2 text-right font-medium">£{comp?.price_per_month_GBP ?? 'N/A'}</td>
                               <td className="p-2">{comp?.contract || 'N/A'}</td>
-                              <td className="p-2 text-slate-600">{comp?.notes || '-'}</td>
+                              <td className="p-2 text-muted-foreground">{comp?.notes || '-'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -425,22 +422,22 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
         );
       })
       ) : (
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <p className="text-slate-500 italic">No product analysis available</p>
+        <div className="bg-card border rounded-lg p-6">
+          <p className="text-muted-foreground italic">No product analysis available</p>
         </div>
       )}
 
       {/* Products Not Considered (if any) */}
       {data?.products_not_considered && data.products_not_considered.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">
+        <div className="bg-card border rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-foreground mb-3">
             Products Not Considered
           </h2>
           <div className="space-y-2">
             {data.products_not_considered.map((product, idx) => (
-              <div key={idx} className="text-sm bg-slate-50 rounded p-3">
-                <div className="font-medium text-slate-900">{product.product}</div>
-                <div className="text-slate-600">{product.details}</div>
+              <div key={idx} className="text-sm bg-muted/50 rounded p-3">
+                <div className="font-medium text-foreground">{product.product}</div>
+                <div className="text-muted-foreground">{product.details}</div>
               </div>
             ))}
           </div>

@@ -75,28 +75,28 @@ export default async function AnalysisDetailPage({
   const isCached = Date.now() - new Date(analysis.created_at).getTime() < 24 * 60 * 60 * 1000;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container-custom py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link href="/dashboard" className="hover:text-gray-900">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link href="/dashboard" className="hover:text-foreground">
             Dashboard
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <Link href="/dashboard/comparison" className="hover:text-gray-900">
+          <Link href="/dashboard/comparison" className="hover:text-foreground">
             Brand Comparison
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">{formattedDate}</span>
+          <span className="text-foreground font-medium">{formattedDate}</span>
         </nav>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-4 mb-6">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-sm font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-background border border-input rounded-md hover:bg-accent hover:text-accent-foreground text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
@@ -106,7 +106,7 @@ export default async function AnalysisDetailPage({
           ) : (
             <Link
               href="/dashboard/comparison"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
             >
               Run New Comparison
             </Link>
@@ -114,22 +114,22 @@ export default async function AnalysisDetailPage({
         </div>
 
         {/* Analysis Title */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-card rounded-lg shadow p-6 mb-6 border">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-foreground mb-2">
                 {title}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 {analysis.comparison_type === 'full' ? 'Full Analysis' : 'Custom Comparison'} •{' '}
                 {formattedDate} at {formattedTime} ({formatDistanceToNow(new Date(analysis.created_at), { addSuffix: true })})
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Based on the most recent plans scraped in the last 180 days
               </p>
             </div>
             {isCached && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
                 Cached Result
               </span>
             )}
@@ -146,7 +146,7 @@ export default async function AnalysisDetailPage({
         </div>
 
         {/* Print-friendly hint */}
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-muted-foreground">
           💡 Tip: Use your browser's print function (Cmd/Ctrl + P) to save or print this analysis
         </div>
       </main>

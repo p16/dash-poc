@@ -125,13 +125,13 @@ export default function JobMonitorPage() {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
       case 'running':
-        return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
       case 'failed':
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+        return <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
     }
   };
 
@@ -165,21 +165,21 @@ export default function JobMonitorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link href="/dashboard" className="hover:text-gray-900">
+      <main className="container-custom py-8">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link href="/dashboard" className="hover:text-foreground">
             Dashboard
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Job Monitor</span>
+          <span className="text-foreground font-medium">Job Monitor</span>
         </nav>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Job Monitor</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">Job Monitor</h1>
+          <p className="mt-2 text-muted-foreground">
             Track the status of all background jobs including scrapes and analyses
           </p>
         </div>
@@ -199,8 +199,8 @@ export default function JobMonitorPage() {
           <Card>
             <CardContent className="py-12">
               <div className="flex flex-col items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-gray-400 mb-4" />
-                <p className="text-sm text-gray-600">Loading jobs...</p>
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-4" />
+                <p className="text-sm text-muted-foreground">Loading jobs...</p>
               </div>
             </CardContent>
           </Card>
@@ -210,9 +210,9 @@ export default function JobMonitorPage() {
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No jobs found</h3>
+                <p className="text-sm text-muted-foreground mb-4">
                   Jobs will appear here after you run scrapes or analyses
                 </p>
                 <Link href="/dashboard">
@@ -250,26 +250,26 @@ export default function JobMonitorPage() {
                     <div className="flex items-center gap-2 text-sm">
                       {event.loadingStatus === 'loading' && (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-                          <span className="text-gray-500 italic">Loading status...</span>
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          <span className="text-muted-foreground italic">Loading status...</span>
                         </>
                       )}
                       {event.loadingStatus === 'timeout' && (
                         <>
-                          <AlertCircle className="h-4 w-4 text-orange-500" />
-                          <span className="text-orange-600">Request timed out - status unavailable</span>
+                          <AlertCircle className="h-4 w-4 text-orange-500 dark:text-orange-400" />
+                          <span className="text-orange-600 dark:text-orange-400">Request timed out - status unavailable</span>
                         </>
                       )}
                       {event.loadingStatus === 'error' && (
                         <>
-                          <XCircle className="h-4 w-4 text-red-500" />
-                          <span className="text-red-600">Failed to load status</span>
+                          <XCircle className="h-4 w-4 text-destructive" />
+                          <span className="text-destructive">Failed to load status</span>
                         </>
                       )}
                       {event.loadingStatus === 'success' && (
                         <>
-                          <AlertCircle className="h-4 w-4 text-gray-400" />
-                          <span className="text-gray-500 italic">No run information available</span>
+                          <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground italic">No run information available</span>
                         </>
                       )}
                     </div>
@@ -278,25 +278,25 @@ export default function JobMonitorPage() {
                       {event.runs.map((run) => (
                         <div
                           key={run.id}
-                          className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                          className="bg-muted/50 rounded-lg p-4 border"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <div className="font-mono text-xs text-gray-700 mb-1">
+                              <div className="font-mono text-xs text-foreground mb-1">
                                 {run.function_id}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 Run ID: {run.id}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {getStatusIcon(run.status)}
-                              <span className="text-sm font-medium text-gray-900">
+                              <span className="text-sm font-medium text-foreground">
                                 {run.status}
                               </span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-gray-600 mt-3">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3">
                             {run.started_at && (
                               <div className="flex items-center gap-1">
                                 <Clock className="h-3 w-3" />

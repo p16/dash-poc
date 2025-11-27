@@ -146,7 +146,7 @@ export function PlanDataTable({ plans, sortColumn, sortDirection, onSort }: Prop
                 Contract
                 {renderSortIcon('contract')}
               </TableHead>
-              <TableHead>Features</TableHead>
+              <TableHead className="w-[200px]">Features</TableHead>
               <TableHead className="hidden md:table-cell">Source</TableHead>
             </TableRow>
           </TableHeader>
@@ -161,7 +161,7 @@ export function PlanDataTable({ plans, sortColumn, sortDirection, onSort }: Prop
                 <TableCell>{getPlanData(plan)}</TableCell>
                 <TableCell>£{getPlanPrice(plan).toFixed(2)}</TableCell>
                 <TableCell>{getPlanContract(plan)}</TableCell>
-                <TableCell>
+                <TableCell className="w-[200px]">
                   <div className="flex flex-wrap gap-1">
                     {getPlanExtras(plan)
                       .slice(0, 3)

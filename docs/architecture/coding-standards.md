@@ -53,7 +53,7 @@ function normalizePrice(price) { }
 ### Example
 ```typescript
 // Good - Server Component
-export default function PlanTable({ plans }: { plans: Plan[] }) {
+export default function PlanDataTable({ plans }: { plans: Plan[] }) {
   return (
     <table>
       {/* table content */}
@@ -64,7 +64,7 @@ export default function PlanTable({ plans }: { plans: Plan[] }) {
 // Good - Client Component
 "use client";
 
-export default function InteractivePlanTable({ plans }: { plans: Plan[] }) {
+export function PlansContent({ initialPlans }: { initialPlans: Plan[] }) {
   const [filter, setFilter] = useState("");
   // ...
 }
@@ -78,7 +78,7 @@ export default function InteractivePlanTable({ plans }: { plans: Plan[] }) {
 - **Barrel exports** - Use `index.ts` for clean imports
 
 ### File Naming
-- **Components** - PascalCase: `PlanTable.tsx`
+- **Components** - PascalCase: `PlansContent.tsx`, `PlanFilterBar.tsx`
 - **Utilities** - camelCase: `normalizePrice.ts`
 - **API routes** - kebab-case: `api/analysis/full.ts`
 - **Types** - PascalCase: `types.ts` or co-located with usage
@@ -101,7 +101,7 @@ export default function InteractivePlanTable({ plans }: { plans: Plan[] }) {
 // Good import order
 import { useState } from 'react';
 import { normalizePrice } from '@/lib/utils';
-import PlanCard from './PlanCard';
+import { PlansContent } from './PlansContent';
 ```
 
 ## Error Handling

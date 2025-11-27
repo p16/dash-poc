@@ -25,25 +25,25 @@ export default async function ComparisonPage() {
   const brands = await getAvailableBrands();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container-custom py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <Link href="/dashboard" className="hover:text-gray-900">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+          <Link href="/dashboard" className="hover:text-foreground">
             Dashboard
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Brand Comparison</span>
+          <span className="text-foreground font-medium">Brand Comparison</span>
         </nav>
 
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Brand Comparison</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">Brand Comparison</h1>
+          <p className="mt-2 text-muted-foreground">
             Compare two mobile network brands side-by-side with AI-powered competitive analysis
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Analysis uses the most recent plans scraped in the last 180 days
           </p>
         </div>

@@ -38,6 +38,9 @@ bmad-scraparer-compare/
 │   ├── components/         # React components
 │   │   ├── ui/             # Reusable UI components
 │   │   ├── dashboard/      # Dashboard-specific components
+│   │   │   ├── PlansContent.tsx    # Plan filtering wrapper
+│   │   │   ├── PlanFilterBar.tsx   # Filter controls
+│   │   │   └── PlanDataTable.tsx   # Plan data table
 │   │   └── analysis/       # Analysis display components
 │   ├── lib/                # Shared utilities
 │   │   ├── db/             # Database utilities
@@ -95,6 +98,9 @@ Next.js App Router directory containing:
 React components organized by feature:
 - **ui/** - Reusable UI primitives (buttons, cards, tables)
 - **dashboard/** - Dashboard-specific components
+  - `PlansContent.tsx` - Client wrapper for plan filtering/sorting/export
+  - `PlanFilterBar.tsx` - Filter controls and export button
+  - `PlanDataTable.tsx` - Sortable plan data table
 - **analysis/** - Analysis display components
 
 ### `/src/lib/`
@@ -159,7 +165,8 @@ Local scraping results (gitignored):
 Configure TypeScript/Next.js to support `@/` alias:
 ```typescript
 import { normalizePrice } from '@/lib/utils';
-import PlanTable from '@/components/dashboard/PlanTable';
+import { PlansContent } from '@/components/dashboard/PlansContent';
+import { PlanFilterBar } from '@/components/dashboard/PlanFilterBar';
 ```
 
 ### Relative Imports

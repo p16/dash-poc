@@ -22,20 +22,20 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-6">
       {/* Filter bar skeleton */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="h-10 bg-gray-200 rounded animate-pulse mb-4"></div>
+      <div className="bg-card rounded-lg shadow p-6">
+        <div className="h-10 bg-muted/50 rounded animate-pulse mb-4"></div>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
-          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 bg-muted/50 rounded animate-pulse"></div>
+          <div className="h-10 bg-muted/50 rounded animate-pulse"></div>
+          <div className="h-10 bg-muted/50 rounded animate-pulse"></div>
+          <div className="h-10 bg-muted/50 rounded animate-pulse"></div>
         </div>
       </div>
       {/* Table skeleton */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card rounded-lg shadow p-6">
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            <div key={i} className="h-12 bg-muted/50 rounded animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -51,23 +51,23 @@ export default async function PlansPage() {
   const plans = await getLatestPlans();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <DashboardHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container-custom py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <Link href="/dashboard" className="hover:text-blue-600">
+        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <Link href="/dashboard" className="hover:text-foreground">
             Dashboard
           </Link>
           <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900 font-medium">Plan Data</span>
+          <span className="text-foreground font-medium">Plan Data</span>
         </nav>
 
         {/* Page Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Plan Data</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-foreground">Plan Data</h1>
+          <p className="mt-2 text-muted-foreground">
             Browse and filter all scraped mobile plan offerings
           </p>
         </div>
