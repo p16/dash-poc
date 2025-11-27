@@ -9,11 +9,10 @@ import {
   DollarSign,
   Package,
   Target,
-  AlertTriangle,
-  AlertCircle,
-  CheckCircle2,
 } from 'lucide-react';
 import type { AnalysisData, CustomComparisonAnalysis } from '@/types/analysis';
+import { CompetitiveInsightsSection } from './CompetitiveInsightsSection';
+import { AnalysisMetadata } from './AnalysisMetadata';
 
 type Props = {
   data: AnalysisData | CustomComparisonAnalysis;
@@ -38,71 +37,17 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
     });
   };
 
-  const getCompetitivenessIcon = (score: number) => {
-    if (score >= 80) return <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />;
-    if (score >= 50) return <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />;
-    return <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />;
-  };
-
   return (
     <div className="space-y-6">
       {/* Metadata */}
-      <div className="bg-muted/50 rounded-lg p-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-4">
-          <span>
-            <strong>Generated:</strong>{' '}
-            {timestamp.toLocaleString('en-GB', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })}
-          </span>
-          <span>
-            <strong>Brands:</strong> {brands?.join(', ') || 'N/A'}
-          </span>
-          <span>
-            <strong>Currency:</strong> {data.currency}
-          </span>
-        </div>
-      </div>
+      <AnalysisMetadata
+        timestamp={timestamp}
+        brands={brands}
+        currency={data.currency}
+      />
 
-      {/* Overall Competitive Sentiments */}
-            {/* Competitive Sentiments */}
-      <div className="bg-card border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4 text-foreground flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          Competitive Insights
-        </h2>
-        {data?.overall_competitive_sentiments && data.overall_competitive_sentiments.length > 0 ? (
-          <div className="space-y-4">
-            {data.overall_competitive_sentiments.map((sentiment, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-lg text-foreground bg-muted border"
-              >
-                <div className="flex items-start gap-3 mb-2">
-                  {getCompetitivenessIcon(sentiment?.score || 0)}
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-semibold">{sentiment?.sentiment || 'N/A'}</h3>
-                      <span className="text-sm font-medium px-2 py-1 rounded bg-background/50">
-                        Score: {sentiment?.score ?? 'N/A'}
-                      </span>
-                    </div>
-                    <p className="text-sm leading-relaxed mt-2">{sentiment?.rationale || 'N/A'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted-foreground italic">No competitive insights available</p>
-        )}
-      </div>
+      {/* Competitive Sentiments */}
+      <CompetitiveInsightsSection sentiments={data?.overall_competitive_sentiments} />
 
       {/* Products Analysis - handles both O2 and Custom Comparison formats */}
       {'o2_products_analysis' in data && data.o2_products_analysis && data.o2_products_analysis.length > 0 ? (

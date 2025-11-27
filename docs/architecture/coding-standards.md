@@ -235,7 +235,7 @@ async function scrapePlan(page: Page) {
 /**
  * Normalizes pricing strings from various formats into a number.
  * Handles formats like "£10/mo", "10 GBP per month", etc.
- * 
+ *
  * @param price - Raw price string from scraped data
  * @returns Normalized price as number in GBP
  */
