@@ -14,7 +14,7 @@ import { logger } from '../utils/logger';
  */
 const GEMINI_API_URL =
   process.env.GEMINI_API_URL ||
-  'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-pro:streamGenerateContent';
+  'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-3-pro-preview:streamGenerateContent';
 
 /**
  * Gemini API request/response types
