@@ -106,10 +106,10 @@ describe('QuickActions Component', () => {
     render(<QuickActions />);
 
     const runButton = screen.getByText('Run Full Analysis');
-    expect(runButton).toHaveClass('bg-blue-600', 'hover:bg-blue-700');
+    expect(runButton).toHaveClass('bg-primary', 'hover:bg-primary/90');
 
     // Link is mocked as <a>, so check the anchor element
     const customLink = screen.getByText('Custom Comparison').closest('a');
-    expect(customLink).toHaveClass('bg-slate-600', 'hover:bg-slate-700');
+    expect(customLink).toHaveClass('bg-secondary', 'hover:bg-secondary/80');
   });
 });

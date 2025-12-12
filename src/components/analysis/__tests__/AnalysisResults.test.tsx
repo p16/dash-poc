@@ -131,18 +131,20 @@ describe('AnalysisResults', () => {
     );
 
     // High score (85) should have red color (lower scores are better in this context)
-    const highScoreElement = screen
-      .getByText('Price competitiveness needs improvement')
-      .closest('.border-2');
-    expect(highScoreElement).toHaveClass('text-red-700');
-    expect(highScoreElement).toHaveClass('bg-red-50');
+    const highScoreText = screen.getByText('Price competitiveness needs improvement');
+    const highScoreContainer = highScoreText.closest('.border');
+    expect(highScoreContainer).toBeInTheDocument();
+    // Check for the icon with destructive color
+    const redIcon = highScoreContainer?.querySelector('.text-destructive');
+    expect(redIcon).toBeInTheDocument();
 
-    // Medium score (45) should have yellow color
-    const mediumScoreElement = screen
-      .getByText('Data allowances are competitive')
-      .closest('.border-2');
-    expect(mediumScoreElement).toHaveClass('text-yellow-700');
-    expect(mediumScoreElement).toHaveClass('bg-yellow-50');
+    // Medium score (45) should have green color (since < 50 is green in getCompetitivenessIcon)
+    const mediumScoreText = screen.getByText('Data allowances are competitive');
+    const mediumScoreContainer = mediumScoreText.closest('.border');
+    expect(mediumScoreContainer).toBeInTheDocument();
+    // Check for the icon with emerald color
+    const greenIcon = mediumScoreContainer?.querySelector('.text-emerald-600');
+    expect(greenIcon).toBeInTheDocument();
   });
 
   it('should toggle sections on click', () => {

@@ -6,6 +6,7 @@
  */
 
 import { inngest } from './client';
+import { NonRetriableError } from 'inngest';
 import { scrapeAndStoreO2Plans } from '../lib/scraping/collectors/o2';
 import { scrapeAndStoreVodafonePlans } from '../lib/scraping/collectors/vodafone';
 import { scrapeAndStoreSkyPlans } from '../lib/scraping/collectors/sky';
@@ -327,9 +328,10 @@ export const runFullAnalysis = inngest.createFunction(
   },
   { event: 'analysis/full' },
   async ({ event, step }) => {
-    const startTime = Date.now();
+    try {
+      const startTime = Date.now();
 
-    logger.info({ triggeredBy: event.data.triggeredBy }, 'Starting full analysis job');
+      logger.info({ triggeredBy: event.data.triggeredBy }, 'Starting full analysis job');
 
     // Step 1: Fetch plan data from database
     const planData = await step.run('fetch-plan-data', async () => {
@@ -418,6 +420,10 @@ export const runFullAnalysis = inngest.createFunction(
     );
 
     return summary;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new NonRetriableError(message);
+    }
   }
 );
 
@@ -444,7 +450,8 @@ export const runCustomComparison = inngest.createFunction(
   },
   { event: 'analysis/custom' },
   async ({ event, step }) => {
-    const startTime = Date.now();
+    try {
+      const startTime = Date.now();
     const { brandA, brandB } = event.data;
 
     if (!brandA || !brandB) {
@@ -561,5 +568,9 @@ export const runCustomComparison = inngest.createFunction(
     );
 
     return summary;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new NonRetriableError(message);
+    }
   }
 );
