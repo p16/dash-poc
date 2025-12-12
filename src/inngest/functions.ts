@@ -39,8 +39,9 @@ export const scrapeAllPlans = inngest.createFunction(
   },
   { event: 'scrape/trigger' },
   async ({ event, step }) => {
-    const startTime = Date.now();
-    const scrapeId = event.id; // Use Inngest event ID to group all plans from this scrape run
+    try {
+      const startTime = Date.now();
+      const scrapeId = event.id; // Use Inngest event ID to group all plans from this scrape run
     const results: Array<{
       name: string;
       status: 'success' | 'failed';
@@ -303,6 +304,10 @@ export const scrapeAllPlans = inngest.createFunction(
     logger.info(summary, 'Scrape job completed');
 
     return summary;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new NonRetriableError(message);
+    }
   }
 );
 
