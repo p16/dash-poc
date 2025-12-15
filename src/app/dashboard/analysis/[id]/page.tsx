@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { requireAuth } from '@/lib/auth/session';
 import { getPool } from '@/lib/db/connection';
+import { validateAnalysisResponse, validateCustomComparisonResponse } from '@/lib/llm/validation';
 import { AnalysisResults } from '@/components/analysis/AnalysisResults';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { RunFullAnalysisButton } from '@/components/dashboard/RunFullAnalysisButton';
@@ -33,7 +34,17 @@ async function getAnalysis(id: string) {
       return null;
     }
 
-    return result.rows[0];
+    const row = result.rows[0];
+
+    // Apply validation based on comparison type
+    const validateFn = row.comparison_type === 'full'
+      ? validateAnalysisResponse
+      : validateCustomComparisonResponse;
+
+    return {
+      ...row,
+      analysis_result: validateFn(row.analysis_result),
+    };
   } catch (error) {
     console.error('Error fetching analysis:', error);
     throw error;

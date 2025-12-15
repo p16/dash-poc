@@ -7,6 +7,7 @@
 
 import { requireAuth } from '@/lib/auth/session';
 import { getPool } from '@/lib/db/connection';
+import { validateAnalysisResponse } from '@/lib/llm/validation';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DataFreshnessBanner } from '@/components/dashboard/DataFreshnessBanner';
 import { ScrapeStatusCard } from '@/components/dashboard/ScrapeStatusCard';
@@ -49,7 +50,11 @@ async function getDashboardData() {
     const analysisResult = await pool.query(
       "SELECT id, brands, created_at, analysis_result, comparison_type FROM analyses WHERE comparison_type = 'full' ORDER BY created_at DESC LIMIT 1"
     );
-    const latestAnalysis = analysisResult.rows[0] || null;
+    const row = analysisResult.rows[0];
+    const latestAnalysis = row ? {
+      ...row,
+      analysis_result: validateAnalysisResponse(row.analysis_result),
+    } : null;
 
     return { planCount, lastScrapedAt, latestAnalysis };
   } catch (error) {

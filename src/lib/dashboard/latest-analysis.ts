@@ -1,4 +1,5 @@
 import { query } from '@/lib/db/connection';
+import { validateAnalysisResponse } from '@/lib/llm/validation';
 
 export type Analysis = {
   id: string;
@@ -35,11 +36,15 @@ export async function getLatestFullAnalysis(): Promise<Analysis | null> {
     }
 
     const row = result.rows[0];
+
+    // Apply validation which normalizes prices and other fields
+    const validatedAnalysis = validateAnalysisResponse(row.analysis_result);
+
     return {
       id: row.id,
       comparison_type: row.comparison_type,
       brands: row.brands,
-      analysis_result: row.analysis_result,
+      analysis_result: validatedAnalysis,
       plan_ids: row.plan_ids,
       created_at: new Date(row.created_at),
     };

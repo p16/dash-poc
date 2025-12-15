@@ -72,10 +72,9 @@ export function AnalysisResults({ data, timestamp, brands }: Props) {
                   </h2>
                   <p className="text-sm text-muted-foreground">
                     {product?.data_tier || 'N/A'} | {product?.roaming_tier || 'N/A'} |{' '}
-                    {product?.product_breakdown?.price_per_month_GBP !== null &&
-                    product?.product_breakdown?.price_per_month_GBP !== undefined
+                    {typeof product?.product_breakdown?.price_per_month_GBP === 'number'
                       ? `£${product.product_breakdown.price_per_month_GBP}/mo`
-                      : 'Price: Unknown'}
+                      : 'Price not available'}
                   </p>
                 </div>
               </div>

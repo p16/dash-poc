@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db/connection';
+import { validateAnalysisResponse } from '@/lib/llm/validation';
 
 export async function GET(
   request: NextRequest,
@@ -34,7 +35,12 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(result.rows[0]);
+    const analysis = result.rows[0];
+
+    // Apply validation to normalize prices and other fields
+    analysis.analysisResult = validateAnalysisResponse(analysis.analysisResult);
+
+    return NextResponse.json(analysis);
   } catch (error) {
     console.error('Error fetching analysis:', error);
     return NextResponse.json(

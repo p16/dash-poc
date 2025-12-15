@@ -135,6 +135,108 @@ const OPTIONAL_DATASET_FIELDS = [
 ];
 
 /**
+ * Convert string price to number (handles Gemini 3 returning prices as strings)
+ * Gemini sometimes returns: "£12.99" or "12.99" instead of 12.99
+ */
+function normalizePrice(price: any): number | null {
+  if (price === null || price === undefined) {
+    return null;
+  }
+
+  // Already a number
+  if (typeof price === 'number') {
+    return price;
+  }
+
+  // String - try to parse
+  if (typeof price === 'string') {
+    const cleaned = price.replace(/[£$€,\s]/g, '').trim();
+    const parsed = parseFloat(cleaned);
+    if (!isNaN(parsed)) {
+      return parsed;
+    }
+  }
+
+  // Can't convert
+  logger.warn({ originalPrice: price, type: typeof price }, 'Failed to normalize price');
+  return null;
+}
+
+/**
+ * Recursively normalize all price_per_month_GBP fields in response
+ * Also converts 'price' field (e.g., "£19.00") to price_per_month_GBP if needed
+ * And normalizes 'price' field in price_suggestions array
+ */
+function normalizeAllPrices(obj: any): void {
+  if (!obj || typeof obj !== 'object') {
+    return;
+  }
+
+  if (Array.isArray(obj)) {
+    obj.forEach(item => {
+      if (item && typeof item === 'object') {
+        // Direct price_per_month_GBP field
+        if ('price_per_month_GBP' in item) {
+          item.price_per_month_GBP = normalizePrice(item.price_per_month_GBP);
+        }
+
+        // Handle 'price' field in product_breakdown (Gemini sometimes uses this instead)
+        // Convert it to price_per_month_GBP if price_per_month_GBP doesn't exist
+        if ('price' in item && !('price_per_month_GBP' in item)) {
+          const normalizedPrice = normalizePrice(item.price);
+          if (normalizedPrice !== null) {
+            item.price_per_month_GBP = normalizedPrice;
+            logger.debug(
+              { normalizedPrice, originalPrice: item.price },
+              'Converted price field to price_per_month_GBP'
+            );
+          }
+        } else if ('price' in item && typeof item.price === 'string') {
+          // Also normalize 'price' field itself (for price_suggestions entries)
+          const normalizedPrice = normalizePrice(item.price);
+          if (normalizedPrice !== null) {
+            item.price = normalizedPrice;
+          }
+        }
+
+        // Recursive
+        normalizeAllPrices(item);
+      }
+    });
+  } else {
+    // Direct price_per_month_GBP field
+    if ('price_per_month_GBP' in obj) {
+      obj.price_per_month_GBP = normalizePrice(obj.price_per_month_GBP);
+    }
+
+    // Handle 'price' field in product_breakdown
+    if ('price' in obj && !('price_per_month_GBP' in obj)) {
+      const normalizedPrice = normalizePrice(obj.price);
+      if (normalizedPrice !== null) {
+        obj.price_per_month_GBP = normalizedPrice;
+        logger.debug(
+          { normalizedPrice, originalPrice: obj.price },
+          'Converted price field to price_per_month_GBP'
+        );
+      }
+    } else if ('price' in obj && typeof obj.price === 'string') {
+      // Also normalize 'price' field itself (for price_suggestions entries)
+      const normalizedPrice = normalizePrice(obj.price);
+      if (normalizedPrice !== null) {
+        obj.price = normalizedPrice;
+      }
+    }
+
+    // Recursively check all nested objects
+    Object.values(obj).forEach(value => {
+      if (value && typeof value === 'object') {
+        normalizeAllPrices(value);
+      }
+    });
+  }
+}
+
+/**
  * Validate that a value is a number within the specified range
  * Logs issues but doesn't throw - returns true if valid
  */
@@ -480,6 +582,9 @@ export function validateAnalysisResponse(response: string | any): any {
       typeof response === 'string' ? response.substring(0, 100) : response
     );
   }
+
+  // Step 1.5: Fix prices - convert string prices to numbers if needed
+  normalizeAllPrices(parsed);
 
   // Step 2: Validate top-level fields (log issues, don't throw)
   validateRequiredFields(parsed, REQUIRED_TOP_LEVEL_FIELDS, 'top-level response');

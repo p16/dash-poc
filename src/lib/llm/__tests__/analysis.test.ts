@@ -177,7 +177,8 @@ describe('Analysis Generation & Caching Engine', () => {
 
       // Verify no API call was made
       expect(mockQueryGeminiJson).not.toHaveBeenCalled();
-      expect(mockValidateAnalysisResponse).not.toHaveBeenCalled();
+      // Validation SHOULD be called now to normalize prices from cache
+      expect(mockValidateAnalysisResponse).toHaveBeenCalled();
     });
 
     it('should query cache with correct parameters', async () => {

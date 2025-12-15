@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 import { getPool } from '@/lib/db/connection';
+import { validateAnalysisResponse } from '@/lib/llm/validation';
 
 /**
  * GET /api/analysis
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
         comparisonType: row.comparison_type,
         brands: row.brands,
         createdAt: row.created_at,
-        analysisResult: row.analysis_result,
+        analysisResult: validateAnalysisResponse(row.analysis_result),
       })),
       count: result.rows.length,
     });

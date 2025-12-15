@@ -560,12 +560,17 @@ export async function generateAnalysis(
     );
 
     if (cachedAnalysis) {
-      // Cache hit - return cached result
+      // Cache hit - return cached result with validation applied
+      const { validateAnalysisResponse, validateCustomComparisonResponse } = await import('./validation');
+      const validateFn = request.comparisonType === 'full'
+        ? validateAnalysisResponse
+        : validateCustomComparisonResponse;
+
       return {
         cached: true,
         analysisId: cachedAnalysis.id,
         createdAt: cachedAnalysis.created_at,
-        data: cachedAnalysis.analysis_result,
+        data: validateFn(cachedAnalysis.analysis_result),
       };
     }
 
